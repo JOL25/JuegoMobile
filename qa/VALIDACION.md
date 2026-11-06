@@ -1,6 +1,6 @@
 # Validación inicial · 6 de noviembre de 2026
 
-- 112 pruebas del motor y de la integración móvil: aprobadas.
+- 114 pruebas del motor y de la integración móvil: aprobadas en la rama `visual`.
 - TypeScript y ESLint: aprobados.
 - Expo Doctor: 20 de 20 comprobaciones aprobadas.
 - Exportación Hermes y recursos de Android e iOS: aprobada.
@@ -19,3 +19,7 @@ Reproducir con `npm run qa:serve` y, en otra terminal, `npm run test:mobile`. El
 - Generar un APK para pruebas y ajustar balance y escala según resultados.
 
 La exportación de JavaScript y las pruebas del navegador no acreditan que una compilación nativa o una prueba física hayan ocurrido. Todavía no hay APK/IPA ni publicación en tiendas.
+
+## Rama visual
+
+Se aprobaron seis comprobaciones adicionales de interacción: vuelo de un arma nueva a su espacio medido, rechazo de selecciones repetidas durante el vuelo, mejora del objeto ya equipado sin duplicar su espacio, adquisición de pasivas, interrupción durante la adquisición de una definitiva, modo de movimiento reducido y tarjetas desplazables en teléfonos pequeños. El informe local se regenera con `npm run test:visual`. Las seis comprobaciones generales de `test:mobile` también pasaron con los nuevos controles.

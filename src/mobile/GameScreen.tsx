@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   AppState,
@@ -26,15 +26,15 @@ import { MenuBridge } from "./MenuBridge.js";
 import { NativeSound } from "./NativeSound";
 import { hydrateStorage, flushStorage } from "./persistence";
 import { GameCanvas } from "./GameCanvas";
+import { VisualPressable } from "./VisualPressable";
+import { MotionProvider, useReducedMotion } from "./Motion";
+import { InventoryDock, type Arrival } from "./InventoryDock";
+import { UpgradeCard, type Upgrade, type Point } from "./UpgradeCard";
+import { AcquisitionFlight, type Acquisition } from "./AcquisitionFlight";
+import { inventoryEntries, upgradeDestination } from "./visualItems.js";
 import { announcementText } from "./announcements.js";
 
 type Runtime = { game: any; input: TouchInput; sound: NativeSound };
-type Upgrade = {
-  title: string;
-  description: string;
-  icon: string;
-  onPick: () => void;
-};
 type Menu = {
   screen: string;
   options?: Upgrade[];
@@ -44,12 +44,12 @@ const time = (n: number) =>
   `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, "0")}`;
 const label = (es: string, en: string) => (getLanguage() === "es" ? es : en);
 const colors = {
-  bg: "#120a10",
-  card: "#21151e",
-  border: "#503b43",
+  bg: "#0b111c",
+  card: "#152130",
+  border: "#3a5063",
   gold: "#e8b13a",
   ink: "#f4ece0",
-  muted: "#b7a4ae",
+  muted: "#9bafbd",
   blue: "#7ec6e0",
 };
 
@@ -65,27 +65,37 @@ function Button({
   testID?: string;
 }) {
   return (
-    <Pressable
+    <VisualPressable
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={title}
       onPress={onPress}
-      style={({ pressed }) => [
-        s.button,
-        secondary && s.secondary,
-        pressed && s.pressed,
-      ]}
+      accent={secondary ? colors.border : colors.gold}
+      ready={!secondary}
+      style={[s.button, secondary && s.secondary]}
     >
       <Text style={[s.buttonText, secondary && { color: colors.ink }]}>
         {title}
       </Text>
-    </Pressable>
+      <Text
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          right: 18,
+          color: secondary ? colors.blue : colors.bg,
+          fontSize: 19,
+        }}
+      >
+        {secondary ? "◇" : "➜"}
+      </Text>
+    </VisualPressable>
   );
 }
 
 function Screen() {
   "use no memo"; // HUD reads a mutable simulation, refreshed on a separate cadence.
   const insets = useSafeAreaInsets();
+  const reducedMotion = useReducedMotion();
   const [runtime, setRuntime] = useState<Runtime | null>(null);
   const [menu, setMenu] = useState<Menu>({ screen: "menu" });
   const [options, setOptions] = useState(false);
@@ -100,8 +110,51 @@ function Screen() {
     dy: number;
   } | null>(null);
 
+  const slots = useRef(new Map<string, React.ComponentRef<typeof View>>());
+  const selectionLock = useRef(false);
+  const selectionToken = useRef(0);
+  const [acquisition, setAcquisition] = useState<Acquisition | null>(null);
+  const [arrival, setArrival] = useState<Arrival>(null);
+  const completeAcquisition = useCallback(
+    (selection: Acquisition) => {
+      if (!selectionLock.current || selection.token !== selectionToken.current)
+        return;
+      const engine = runtime?.game;
+      if (
+        engine?.state === STATE.LEVEL_UP &&
+        engine.menu.current.options?.includes(selection.option)
+      ) {
+        const hidden = engine.pageHidden;
+        selection.option.onPick();
+        if (hidden && engine.state === STATE.PLAYING) engine.togglePause();
+        setArrival({ key: selection.key, token: selection.token });
+      }
+      selectionLock.current = false;
+      setAcquisition(null);
+    },
+    [runtime],
+  );
+  const chooseUpgrade = (option: Upgrade, source: Point) => {
+    if (
+      selectionLock.current ||
+      runtime?.game.state !== STATE.LEVEL_UP ||
+      !runtime.game.menu.current.options?.includes(option)
+    )
+      return;
+    selectionLock.current = true;
+    setAcquisition({
+      option,
+      source,
+      key: upgradeDestination(option),
+      token: ++selectionToken.current,
+    });
+  };
+
   const onTick = useCallback(() => refresh((n) => n + 1), []);
   const onError = useCallback((message: string) => setFatal(message), []);
+  useEffect(() => {
+    runtime?.game.renderer.setReducedMotion(reducedMotion);
+  }, [runtime, reducedMotion]);
 
   useEffect(() => {
     let cancelled = false;
@@ -186,6 +239,13 @@ function Screen() {
   const playing = menu.screen === "playing";
   const game = runtime?.game;
   const player = game?.player;
+  const inventoryColumns = Math.max(
+    1,
+    Math.floor((size.width - insets.left - insets.right - 26) / 42),
+  );
+  const inventoryRows = player
+    ? Math.ceil((inventoryEntries(player).length + 1) / inventoryColumns)
+    : 1;
   const resetStick = () => {
     runtime?.input.resetMovement();
     setStick(null);
@@ -296,33 +356,17 @@ function Screen() {
                 {Math.ceil(player.hp)} / {player.maxHp} HP
               </Text>
             </View>
-            <Pressable
+            <VisualPressable
               testID="pause"
               accessibilityRole="button"
+              round
+              accent={colors.blue}
               accessibilityLabel={t("Pausar")}
               onPress={() => game.togglePause()}
               style={s.pause}
             >
               <Text style={s.pauseText}>Ⅱ</Text>
-            </Pressable>
-          </View>
-          <View
-            pointerEvents="none"
-            style={[
-              s.inventory,
-              { top: insets.top + 115, left: insets.left + 16 },
-            ]}
-          >
-            {player.weapons.map((w: any) => (
-              <Text key={w.id} style={s.small}>
-                {t(w.name)} · {w.level}
-              </Text>
-            ))}
-            {player.passives.map((p: any) => (
-              <Text key={p.id} style={s.small}>
-                {t(p.name)} · {p.level}
-              </Text>
-            ))}
+            </VisualPressable>
           </View>
           <View
             testID="joystick-zone"
@@ -368,9 +412,12 @@ function Screen() {
               { right: insets.right + 20, bottom: insets.bottom + 24 },
             ]}
           >
-            <Pressable
+            <VisualPressable
               testID="ultimate"
               accessibilityRole="button"
+              round
+              ready={!!player.ultimate?.isReady()}
+              accent={colors.gold}
               accessibilityLabel={t("Usar definitiva")}
               disabled={!player.ultimate?.isReady()}
               onTouchStart={() => {
@@ -395,10 +442,13 @@ function Screen() {
                     ? label("LISTO", "READY")
                     : `${Math.ceil(player.ultimate.cooldownTimer / 1000)}s`}
               </Text>
-            </Pressable>
-            <Pressable
+            </VisualPressable>
+            <VisualPressable
               testID="dash"
               accessibilityRole="button"
+              round
+              ready={player.dashCharges > 0}
+              accent={colors.blue}
               accessibilityLabel={t("Usar dash")}
               disabled={player.dashCharges <= 0}
               onTouchStart={() => {
@@ -415,7 +465,7 @@ function Screen() {
               <Text testID="dash-charges" style={s.actionSub}>
                 {player.dashCharges} / {player.dashMaxCharges}
               </Text>
-            </Pressable>
+            </VisualPressable>
           </View>
           <View
             pointerEvents="none"
@@ -441,12 +491,25 @@ function Screen() {
           </View>
         </>
       )}
+      {(playing || menu.screen === "level_up") && (
+        <InventoryDock
+          player={player}
+          preview={acquisition?.option ?? null}
+          slots={slots}
+          arrival={arrival}
+          top={insets.top + (playing ? 113 : 18)}
+          left={insets.left + 16}
+          right={insets.right + 16}
+        />
+      )}
       {!playing && (
         <View
           style={[
             s.overlay,
             {
-              paddingTop: insets.top + 20,
+              paddingTop:
+                insets.top +
+                (menu.screen === "level_up" ? 45 + 42 * inventoryRows : 20),
               paddingBottom: insets.bottom + 20,
               paddingLeft: insets.left + 22,
               paddingRight: insets.right + 22,
@@ -454,6 +517,7 @@ function Screen() {
           ]}
         >
           <ScrollView
+            scrollEnabled={!acquisition}
             contentContainerStyle={s.scroll}
             showsVerticalScrollIndicator={false}
           >
@@ -592,25 +656,14 @@ function Screen() {
                     {t("Elige una mejora")} · Nv. {player.level}
                   </Text>
                   {menu.options?.map((upgrade, i) => (
-                    <Pressable
-                      key={`${player.level}-${i}`}
-                      testID={`upgrade-${i}`}
-                      accessibilityRole="button"
-                      onPress={() => {
-                        if (
-                          game.state === STATE.LEVEL_UP &&
-                          game.menu.current.options === menu.options
-                        )
-                          upgrade.onPick();
-                      }}
-                      style={({ pressed }) => [s.upgrade, pressed && s.pressed]}
-                    >
-                      <Text style={s.upgradeTitle}>
-                        {upgrade.icon} {upgrade.title}
-                      </Text>
-                      <Text style={s.upgradeCopy}>{upgrade.description}</Text>
-                      <Text style={s.choose}>{t("ELEGIR")} →</Text>
-                    </Pressable>
+                    <UpgradeCard
+                      key={`${player.level}-${upgradeDestination(upgrade)}-${i}`}
+                      option={upgrade}
+                      index={i}
+                      selected={acquisition?.key ?? null}
+                      locked={!!acquisition}
+                      onSelect={chooseUpgrade}
+                    />
                   ))}
                 </>
               ) : (
@@ -648,13 +701,23 @@ function Screen() {
           </ScrollView>
         </View>
       )}
+      {acquisition && (
+        <AcquisitionFlight
+          key={acquisition.token}
+          acquisition={acquisition}
+          slots={slots}
+          onComplete={completeAcquisition}
+        />
+      )}
     </View>
   );
 }
 export default function GameScreen() {
   return (
     <SafeAreaProvider>
-      <Screen />
+      <MotionProvider>
+        <Screen />
+      </MotionProvider>
     </SafeAreaProvider>
   );
 }
@@ -673,7 +736,7 @@ const s = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#120a10e8",
+    backgroundColor: "#0b111ce8",
   },
   scroll: { flexGrow: 1, justifyContent: "center", alignItems: "center" },
   panel: { width: "100%", maxWidth: 440, paddingVertical: 20, gap: 14 },
@@ -713,7 +776,7 @@ const s = StyleSheet.create({
   button: {
     backgroundColor: colors.gold,
     minHeight: 54,
-    paddingHorizontal: 18,
+    paddingHorizontal: 36,
     paddingVertical: 15,
     alignItems: "center",
     justifyContent: "center",
@@ -783,8 +846,10 @@ const s = StyleSheet.create({
     flex: 1,
     maxWidth: 320,
     padding: 10,
-    backgroundColor: "#120a10b8",
+    backgroundColor: "#0b1523d9",
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#7ec6e030",
   },
   row: {
     flexDirection: "row",
@@ -819,7 +884,6 @@ const s = StyleSheet.create({
     borderColor: colors.border,
   },
   pauseText: { fontSize: 24, fontWeight: "900", color: colors.ink },
-  inventory: { position: "absolute", gap: 2, opacity: 0.8 },
   touchZone: { position: "absolute", width: "55%" },
   joystick: {
     position: "absolute",
@@ -847,8 +911,8 @@ const s = StyleSheet.create({
     alignItems: "flex-end",
   },
   action: {
-    width: 76,
-    height: 76,
+    width: 82,
+    height: 82,
     borderRadius: 38,
     borderWidth: 2,
     borderColor: colors.blue,
@@ -857,8 +921,8 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   ultimate: {
-    width: 64,
-    height: 64,
+    width: 70,
+    height: 70,
     borderColor: colors.gold,
     backgroundColor: "#3c2c13e8",
   },
@@ -887,24 +951,6 @@ const s = StyleSheet.create({
     textAlign: "center",
     textShadowColor: colors.bg,
     textShadowRadius: 4,
-  },
-  upgrade: {
-    padding: 18,
-    borderRadius: 14,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 8,
-    minHeight: 120,
-  },
-  upgradeTitle: { color: colors.ink, fontSize: 18, fontWeight: "800" },
-  upgradeCopy: { color: colors.muted, fontSize: 13, lineHeight: 20 },
-  choose: {
-    color: colors.gold,
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1,
-    marginTop: 4,
   },
   results: {
     padding: 26,

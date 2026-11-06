@@ -40,7 +40,8 @@
     "postinstall": "npm run web:setup",
     "test:mobile": "node scripts/mobile-smoke.mjs",
     "lint": "expo lint",
-    "assets:icons": "node scripts/generate-icons.mjs"
+    "assets:icons": "node scripts/generate-icons.mjs",
+    "test:visual": "node scripts/visual-smoke.mjs"
   },
   "private": true,
   "type": "module"
