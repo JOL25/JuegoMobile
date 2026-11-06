@@ -1,0 +1,78 @@
+import { storage } from '../storage.js';
+
+const EN = {
+  'Arrastra para moverte. Tus armas disparan solas.': 'Drag to move. Your weapons fire automatically.',
+  'Muévete con WASD o flechas. Tus armas disparan solas.': 'Move with WASD or arrows. Your weapons fire automatically.',
+  'Recoge las gemas azules para subir de nivel y elegir mejoras.': 'Collect blue gems to level up and choose upgrades.',
+  'Pulsa DASH para esquivar sin soltar el joystick.': 'Tap DASH to dodge while holding the joystick.',
+  'Usa Espacio o Shift para esquivar con el dash.': 'Use Space or Shift to dodge with a dash.',
+  '¡Definitiva lista! Pulsa el botón ULT.': 'Ultimate ready! Tap the ULT button.',
+  '¡Definitiva lista! Pulsa Q, E o R para activarla.': 'Ultimate ready! Press Q, E or R to activate it.',
+  'Botón DASH': 'DASH button', 'Botón ULT (nivel 5)': 'ULT button (level 5)',
+  'Usar dash': 'Use dash', 'Usar definitiva': 'Use ultimate',
+  'Listo': 'Ready', 'Preparando anuncio…': 'Preparing ad…', 'Anuncio en curso…': 'Ad playing…',
+  'Mueve': 'Move',
+  'Sobrevive a la horda interminable. Sube de nivel. No mires atrás.': 'Survive the endless horde. Level up. Never look back.',
+  'Empezar': 'Play', 'Opciones': 'Options', 'Idioma': 'Language', 'Volver': 'Back',
+  'Movimiento:': 'Movement:', 'WASD / Flechas / Joystick táctil': 'WASD / Arrow keys / Touch joystick',
+  'Espacio o Shift': 'Space or Shift', 'Definitiva:': 'Ultimate:',
+  'Q, E o R (se desbloquea al nivel 5)': 'Q, E or R (unlocks at level 5)',
+  'Esc o P': 'Esc or P', 'Pausa:': 'Pause:', 'Pausa': 'Pause', 'Pausar': 'Pause',
+  'Español': 'Spanish',
+  '¡Subiste de nivel!': 'Level up!', 'Elige una mejora': 'Choose an upgrade',
+  'Sonido:': 'Sound:', 'Volumen del sonido': 'Sound volume', 'Continuar': 'Resume',
+  'Reiniciar': 'Restart', 'Has caído': 'Game over', 'Volver a intentar': 'Try again',
+  'Salir de pantalla completa': 'Exit fullscreen', 'Pantalla completa': 'Fullscreen',
+  'No se pudo activar. Puedes usar F11 en el navegador.': 'Could not enter fullscreen. You can use F11 in your browser.',
+  'Súper disparo perforante': 'Super Pierce Shot', 'Onda explosiva grande': 'Explosive Wave',
+  'Láser orbital': 'Orbit Laser', 'Rayo perforante': 'Pierce Ray', 'Misil': 'Missile',
+  'Poción curativa': 'Healing Potion', 'Recupera 30 de vida': 'Restore 30 health',
+  'Vida máxima:': 'Max health:', 'Velocidad:': 'Speed:', 'Armadura:': 'Armor:',
+  'Rango de recogida:': 'Pickup range:', 'Vida al matar:': 'Health on kill:',
+  'Daño:': 'Damage:', 'Recarga:': 'Cooldown:', 'Más alcance': 'Longer reach',
+  'Daña a enemigos cercanos': 'Damages nearby enemies', 'Mayor ralentización': 'Stronger slow',
+  'Ralentiza enemigos': 'Slows enemies', 'Ataque cercano': 'Close-range attack',
+  'Empuja enemigos': 'Knocks enemies back', 'Ambos lados': 'Both sides',
+  'Proyectiles:': 'Projectiles:', 'Perforación:': 'Pierce:', 'Atraviesa enemigos': 'Pierces enemies',
+  'Rayo más ancho': 'Wider beam', 'Ataque en línea': 'Line attack', 'Misiles:': 'Missiles:',
+  'Explosión más grande': 'Larger explosion', 'Explota al impactar': 'Explodes on impact',
+  'Perforación total': 'Unlimited piercing', 'Onda más grande': 'Larger shockwave',
+  'Daña a tu alrededor': 'Damages surrounding enemies', 'Haces:': 'Beams:',
+  'Gira a tu alrededor': 'Rotates around you', 'Láser más grueso': 'Thicker laser',
+  'Duración:': 'Duration:', 'Activar:': 'Activate:', 'Cargas:': 'Charges:', '+1 carga': '+1 charge',
+  'Definitiva al Nv.': 'Ultimate at Lv.', 'Elige definitiva': 'Choose an ultimate',
+  'Definitiva': 'Ultimate', 'Pasiva': 'Passive', 'Curación': 'Healing', 'Arma': 'Weapon',
+  'ELEGIR': 'CHOOSE', 'Nv.': 'Lv.', 'IMAN': 'MAGNET', 'HIELO': 'FREEZE',
+  'HAN EMERGIDO LOS': 'NEW ENEMIES HAVE EMERGED',
+  'Triángulos': 'Triangles', 'Cuadrados': 'Squares', 'Rombos': 'Diamonds',
+  'Pentágonos': 'Pentagons', 'Hexágonos': 'Hexagons',
+  'Han aparecido beneficios': 'Mysterious power-ups', 'misteriosos en el mapa': 'have appeared on the map',
+};
+const ES = {
+  'Vector Cannon': 'Cañón vectorial', 'Arc Slash': 'Corte de arco',
+  'Repulsion Field': 'Campo de repulsión', 'Prism Ray': 'Rayo prisma',
+  'Polygon Missile': 'Misil poligonal', 'Vital Core': 'Núcleo vital',
+  'Velocity Vector': 'Vector de velocidad', 'Polygon Shell': 'Coraza poligonal',
+  'Attraction Field': 'Campo de atracción', 'Energy Recycle': 'Reciclaje de energía',
+  'English': 'Inglés',
+  'New best time!': '¡Nuevo récord!', 'Survived': 'Tiempo sobrevivido',
+  'Level reached': 'Nivel alcanzado', 'Enemies slain': 'Enemigos derrotados',
+  'Magic Wand': 'Varita mágica', 'Garlic Aura': 'Aura de ajo', 'Whip': 'Látigo',
+  'Ancient Tome': 'Tomo antiguo', 'Swift Boots': 'Botas veloces', 'Bone Armor': 'Armadura de hueso',
+  'Pull Amulet': 'Amuleto de atracción', "Vampire's Kiss": 'Beso vampírico',
+};
+let language = 'es';
+// Native startup restores the saved language before constructing the game.
+
+export function getLanguage() { return language; }
+export function setLanguage(value) {
+  if (!['es', 'en'].includes(value)) return;
+  language = value;
+  storage.setItem('vs_clone_language', value);
+}
+
+// Translate complete messages, never substrings inside another name or sentence.
+export function t(text) {
+  const dictionary = language === 'en' ? EN : ES;
+  return dictionary[text] ?? text;
+}
