@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { t, getLanguage } from "../game/ui/i18n.js";
 import { inventoryEntries, itemLook } from "./visualItems.js";
+import { GeometryIcon } from "./GeometryIcon";
 import { nativeDriver, useReducedMotion } from "./Motion";
 
 export type MeasuredView = React.ComponentRef<typeof View>;
@@ -39,7 +40,7 @@ function Slot({
       accessibilityLabel={`${t(item.name)} · ${item.level}`}
       style={[
         s.slot,
-        { borderColor: item.preview ? look.color : "#44505b" },
+        { borderColor: item.preview ? look.color : `${look.color}55` },
         item.preview && s.preview,
       ]}
     >
@@ -64,9 +65,11 @@ function Slot({
           },
         ]}
       />
-      <Text style={[s.symbol, { color: look.color }]}>
-        {item.preview ? "＋" : look.symbol}
-      </Text>
+      {item.preview ? (
+        <Text style={[s.symbol, { color: look.color }]}>＋</Text>
+      ) : (
+        <GeometryIcon id={item.id} size={32} />
+      )}
       <Text style={s.level}>{item.level}</Text>
     </View>
   );
@@ -96,8 +99,8 @@ export function InventoryDock({
     >
       <Text style={s.label}>
         {getLanguage() === "es"
-          ? "ARSENAL / INVENTARIO"
-          : "ARSENAL / INVENTORY"}
+          ? "TU GEOMETRÍA / INVENTARIO"
+          : "YOUR GEOMETRY / INVENTORY"}
       </Text>
       <View style={s.row}>
         {inventoryEntries(player, preview).map((item) => (
@@ -120,11 +123,11 @@ const s = StyleSheet.create({
   label: { color: "#99aebc", letterSpacing: 2, fontSize: 9, fontWeight: "700" },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   slot: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderWidth: 1,
     borderRadius: 8,
-    backgroundColor: "#101a24ed",
+    backgroundColor: "#111c27f5",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -134,7 +137,7 @@ const s = StyleSheet.create({
     right: 2,
     bottom: 0,
     color: "#f4ece0",
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: "800",
   },
   preview: { borderStyle: "dashed", backgroundColor: "#273544" },

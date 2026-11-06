@@ -13,7 +13,7 @@ page.on("pageerror", (e) => errors.push(e.message));
 page.on("console", (msg) => {
   if (msg.type() === "error") errors.push(msg.text());
 });
-await page.goto("http://localhost:8087");
+await page.goto(process.env.QA_URL || "http://localhost:8087");
 await page.getByTestId("start").waitFor({ timeout: 120000 });
 await page.screenshot({ path: "qa/menu.png" });
 await page.getByTestId("start").tap();

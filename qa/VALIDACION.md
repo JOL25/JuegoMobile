@@ -1,6 +1,6 @@
 # Validación inicial · 6 de noviembre de 2026
 
-- 114 pruebas del motor y de la integración móvil: aprobadas en la rama `visual`.
+- 121 pruebas del motor y de la integración móvil: aprobadas en la rama `visual`.
 - TypeScript y ESLint: aprobados.
 - Expo Doctor: 20 de 20 comprobaciones aprobadas.
 - Exportación Hermes y recursos de Android e iOS: aprobada.
@@ -23,3 +23,7 @@ La exportación de JavaScript y las pruebas del navegador no acreditan que una c
 ## Rama visual
 
 Se aprobaron seis comprobaciones adicionales de interacción: vuelo de un arma nueva a su espacio medido, rechazo de selecciones repetidas durante el vuelo, mejora del objeto ya equipado sin duplicar su espacio, adquisición de pasivas, interrupción durante la adquisición de una definitiva, modo de movimiento reducido y tarjetas desplazables en teléfonos pequeños. El informe local se regenera con `npm run test:visual`. Las seis comprobaciones generales de `test:mobile` también pasaron con los nuevos controles.
+
+## Rediseño roguelite
+
+Se aprobaron otras seis comprobaciones de interfaz mediante `test:rogue`: menú compacto, las 15 identidades geométricas, todas las estadísticas tácticas de mejora (incluidos ralentización y ataque por ambos lados), inventario completo y traducido, resumen de pausa, derrota y reinicio. Los builds completos se preparan con datos de prueba en emulación. No se realizó una prueba en dispositivos físicos.

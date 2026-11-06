@@ -41,7 +41,8 @@
     "test:mobile": "node scripts/mobile-smoke.mjs",
     "lint": "expo lint",
     "assets:icons": "node scripts/generate-icons.mjs",
-    "test:visual": "node scripts/visual-smoke.mjs"
+    "test:visual": "node scripts/visual-smoke.mjs",
+    "test:rogue": "node scripts/rogue-smoke.mjs"
   },
   "private": true,
   "type": "module"

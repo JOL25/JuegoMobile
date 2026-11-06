@@ -32,6 +32,8 @@ import { InventoryDock, type Arrival } from "./InventoryDock";
 import { UpgradeCard, type Upgrade, type Point } from "./UpgradeCard";
 import { AcquisitionFlight, type Acquisition } from "./AcquisitionFlight";
 import { inventoryEntries, upgradeDestination } from "./visualItems.js";
+import { MenuIdentity, RunHud, LevelUpHeading, RunSummary } from "./RogueUI";
+import { GeometryIcon } from "./GeometryIcon";
 import { announcementText } from "./announcements.js";
 
 type Runtime = { game: any; input: TouchInput; sound: NativeSound };
@@ -40,8 +42,6 @@ type Menu = {
   options?: Upgrade[];
   stats?: { level: number; time: number; kills: number; isHighScore: boolean };
 };
-const time = (n: number) =>
-  `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, "0")}`;
 const label = (es: string, en: string) => (getLanguage() === "es" ? es : en);
 const colors = {
   bg: "#0b111c",
@@ -241,7 +241,7 @@ function Screen() {
   const player = game?.player;
   const inventoryColumns = Math.max(
     1,
-    Math.floor((size.width - insets.left - insets.right - 26) / 42),
+    Math.floor((size.width - insets.left - insets.right - 26) / 46),
   );
   const inventoryRows = player
     ? Math.ceil((inventoryEntries(player).length + 1) / inventoryColumns)
@@ -313,61 +313,13 @@ function Screen() {
       />
       {playing && (
         <>
-          <View
-            pointerEvents="box-none"
-            style={[
-              s.hud,
-              {
-                top: insets.top + 12,
-                left: insets.left + 16,
-                right: insets.right + 16,
-              },
-            ]}
-          >
-            <View pointerEvents="none" style={s.hudStats}>
-              <View style={s.row}>
-                <Text style={s.gold}>NV. {player.level}</Text>
-                <Text style={s.timer} testID="timer">
-                  {time(player.survivalTime)}
-                </Text>
-                <Text style={s.small}>◆ {player.kills}</Text>
-              </View>
-              <View style={s.bar}>
-                <View
-                  style={[
-                    s.hp,
-                    {
-                      width: `${Math.max(0, player.hp / player.maxHp) * 100}%`,
-                    },
-                  ]}
-                />
-              </View>
-              <View style={[s.bar, { height: 4, marginTop: 5 }]}>
-                <View
-                  style={[
-                    s.xp,
-                    {
-                      width: `${Math.min(1, player.xp / player.xpToNext) * 100}%`,
-                    },
-                  ]}
-                />
-              </View>
-              <Text style={s.small}>
-                {Math.ceil(player.hp)} / {player.maxHp} HP
-              </Text>
-            </View>
-            <VisualPressable
-              testID="pause"
-              accessibilityRole="button"
-              round
-              accent={colors.blue}
-              accessibilityLabel={t("Pausar")}
-              onPress={() => game.togglePause()}
-              style={s.pause}
-            >
-              <Text style={s.pauseText}>Ⅱ</Text>
-            </VisualPressable>
-          </View>
+          <RunHud
+            player={player}
+            top={insets.top + 10}
+            left={insets.left + 16}
+            right={insets.right + 16}
+            onPause={() => game.togglePause()}
+          />
           <View
             testID="joystick-zone"
             style={[
@@ -423,6 +375,13 @@ function Screen() {
               onTouchStart={() => {
                 if (player.ultimate?.isReady()) runtime.input.queueUltimate();
               }}
+              accessibilityActions={[
+                { name: "activate", label: t("Usar definitiva") },
+              ]}
+              onAccessibilityAction={(event) => {
+                if (event.nativeEvent.actionName === "activate")
+                  runtime.input.queueUltimate();
+              }}
               onAccessibilityTap={() => runtime.input.queueUltimate()}
               onPress={(event) => {
                 if ((event.nativeEvent as any).detail === 0)
@@ -434,6 +393,7 @@ function Screen() {
                 !player.ultimate?.isReady() && s.disabled,
               ]}
             >
+              <GeometryIcon id={player.ultimate?.id ?? "ult_wave"} size={25} />
               <Text style={s.actionTitle}>ULT</Text>
               <Text style={s.actionSub}>
                 {!player.ultimate
@@ -454,6 +414,13 @@ function Screen() {
               onTouchStart={() => {
                 if (player.dashCharges > 0) runtime.input.queueDash();
               }}
+              accessibilityActions={[
+                { name: "activate", label: t("Usar dash") },
+              ]}
+              onAccessibilityAction={(event) => {
+                if (event.nativeEvent.actionName === "activate")
+                  runtime.input.queueDash();
+              }}
               onAccessibilityTap={() => runtime.input.queueDash()}
               onPress={(event) => {
                 if ((event.nativeEvent as any).detail === 0)
@@ -461,6 +428,7 @@ function Screen() {
               }}
               style={[s.action, !player.dashCharges && s.disabled]}
             >
+              <GeometryIcon id="dash" size={28} />
               <Text style={s.actionTitle}>DASH</Text>
               <Text testID="dash-charges" style={s.actionSub}>
                 {player.dashCharges} / {player.dashMaxCharges}
@@ -497,7 +465,7 @@ function Screen() {
           preview={acquisition?.option ?? null}
           slots={slots}
           arrival={arrival}
-          top={insets.top + (playing ? 113 : 18)}
+          top={insets.top + (playing ? 135 : 16)}
           left={insets.left + 16}
           right={insets.right + 16}
         />
@@ -509,7 +477,7 @@ function Screen() {
             {
               paddingTop:
                 insets.top +
-                (menu.screen === "level_up" ? 45 + 42 * inventoryRows : 20),
+                (menu.screen === "level_up" ? 44 + 46 * inventoryRows : 20),
               paddingBottom: insets.bottom + 20,
               paddingLeft: insets.left + 22,
               paddingRight: insets.right + 22,
@@ -522,7 +490,9 @@ function Screen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={s.panel}>
-              <Text style={s.eyebrow}>CIRCLE VS GEOMETRY</Text>
+              {menu.screen !== "menu" && menu.screen !== "level_up" && (
+                <Text style={s.eyebrow}>CIRCLE VS GEOMETRY</Text>
+              )}
               {options ? (
                 <>
                   <Text style={s.heading}>{t("Opciones")}</Text>
@@ -577,23 +547,10 @@ function Screen() {
                 </>
               ) : menu.screen === "menu" ? (
                 <>
-                  <View style={s.heroMark}>
-                    <View style={s.heroCircle}>
-                      <Text style={s.heroArrow}>➜</Text>
-                    </View>
-                    <View style={s.triangle} />
-                    <View style={s.square} />
-                  </View>
-                  <Text style={s.title}>CIRCLE{"\n"}VS GEOMETRY</Text>
-                  <Text style={s.copy}>
-                    {t(
-                      "Sobrevive a la horda interminable. Sube de nivel. No mires atrás.",
-                    )}
-                  </Text>
-                  <Text style={s.record}>
-                    {label("RÉCORD", "BEST")} ·{" "}
-                    {time(Number(storage.getItem("vs_clone_best_time")) || 0)}
-                  </Text>
+                  <MenuIdentity
+                    best={Number(storage.getItem("vs_clone_best_time")) || 0}
+                    compact={size.height < 700}
+                  />
                   <Button
                     title={t("Empezar")}
                     testID="start"
@@ -622,10 +579,12 @@ function Screen() {
               ) : menu.screen === "paused" ? (
                 <>
                   <Text style={s.heading}>{t("Pausa")}</Text>
-                  <Text style={s.copy}>
-                    {time(player.survivalTime)} · Nv. {player.level} ·{" "}
-                    {player.kills} {label("derrotados", "defeated")}
-                  </Text>
+                  <RunSummary
+                    player={player}
+                    time={player.survivalTime}
+                    kills={player.kills}
+                    level={player.level}
+                  />
                   <Button
                     title={t("Continuar")}
                     testID="resume"
@@ -651,13 +610,14 @@ function Screen() {
                 </>
               ) : menu.screen === "level_up" ? (
                 <>
-                  <Text style={s.heading}>{t("¡Subiste de nivel!")}</Text>
-                  <Text style={s.copy}>
-                    {t("Elige una mejora")} · Nv. {player.level}
-                  </Text>
+                  <LevelUpHeading
+                    level={player.level}
+                    pending={game.levelUpSystem.pendingLevelUps}
+                  />
                   {menu.options?.map((upgrade, i) => (
                     <UpgradeCard
                       key={`${player.level}-${upgradeDestination(upgrade)}-${i}`}
+                      player={player}
                       option={upgrade}
                       index={i}
                       selected={acquisition?.key ?? null}
@@ -674,15 +634,12 @@ function Screen() {
                       {label("¡NUEVO RÉCORD!", "NEW BEST!")}
                     </Text>
                   )}
-                  <View style={s.results}>
-                    <Text style={s.resultTime}>
-                      {time(menu.stats?.time ?? 0)}
-                    </Text>
-                    <Text style={s.copy}>
-                      Nv. {menu.stats?.level} · {menu.stats?.kills}{" "}
-                      {label("derrotados", "defeated")}
-                    </Text>
-                  </View>
+                  <RunSummary
+                    player={player}
+                    time={menu.stats?.time ?? 0}
+                    kills={menu.stats?.kills ?? 0}
+                    level={menu.stats?.level ?? 1}
+                  />
                   <Button
                     title={t("Volver a intentar")}
                     testID="retry"
@@ -736,10 +693,10 @@ const s = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#0b111ce8",
+    backgroundColor: "#080f18ed",
   },
   scroll: { flexGrow: 1, justifyContent: "center", alignItems: "center" },
-  panel: { width: "100%", maxWidth: 440, paddingVertical: 20, gap: 14 },
+  panel: { width: "100%", maxWidth: 440, paddingVertical: 16, gap: 12 },
   eyebrow: {
     color: colors.gold,
     letterSpacing: 3,
@@ -775,12 +732,12 @@ const s = StyleSheet.create({
   },
   button: {
     backgroundColor: colors.gold,
-    minHeight: 54,
+    minHeight: 58,
     paddingHorizontal: 36,
     paddingVertical: 15,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.gold,
   },
@@ -916,7 +873,7 @@ const s = StyleSheet.create({
     borderRadius: 38,
     borderWidth: 2,
     borderColor: colors.blue,
-    backgroundColor: "#1a2a30e8",
+    backgroundColor: "#14232cf0",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -924,9 +881,14 @@ const s = StyleSheet.create({
     width: 70,
     height: 70,
     borderColor: colors.gold,
-    backgroundColor: "#3c2c13e8",
+    backgroundColor: "#30271bf0",
   },
-  actionTitle: { color: colors.ink, fontSize: 13, fontWeight: "900" },
+  actionTitle: {
+    color: colors.ink,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    fontWeight: "800",
+  },
   actionSub: { color: colors.ink, fontSize: 10, marginTop: 4 },
   notices: {
     position: "absolute",

@@ -1,25 +1,41 @@
-# Rama visual
+# Interfaz de supervivencia geométrica
 
-## Botones y selección
+La rama `visual` presenta una identidad propia de roguelite: emblema orbital animado, menú centrado en la siguiente partida, HUD de integridad y evolución, inventario de formas y resumen con los resultados reales de la partida.
 
-Botones con borde de panel, relieve inferior, compresión al pulsar, rebote al soltar y onda de luz. DASH y ULT pulsan cuando están disponibles; mantienen la activación en el primer contacto y el movimiento con otro dedo. Las tarjetas de mejora entran escalonadas y muestran un símbolo geométrico, categoría y color por objeto.
+## Un lenguaje geométrico coherente
 
-Al elegir una tarjeta, las demás se atenúan. El icono se eleva y recorre un arco durante unos 860 ms hasta el espacio correspondiente del inventario. El destino se mide en pantalla, de modo que también funciona al desplazarse por las tarjetas. El espacio se ilumina al recibirlo y entonces se aplica la mejora una sola vez. Durante el recorrido la simulación permanece detenida. Armas nuevas y pasivas crean un espacio; mejoras existentes, definitivas, DASH y curación apuntan a su objeto o indicador correspondiente.
+Cada objeto tiene nombre, familia, ilustración geométrica y color propios. El mismo dibujo aparece en su tarjeta, su espacio del inventario y la animación de adquisición. Los iconos se dibujan con vistas nativas y están memoizados; no dependen de emojis, fuentes ni descargas.
 
-La preferencia de movimiento reducido sustituye el recorrido por un fundido breve y detiene los pulsos decorativos y la rotación del reactor. Si la app pasa a segundo plano durante una adquisición, el combate queda en pausa al regresar.
+| Armas            | Formas pasivas    | Definitivas          |
+| ---------------- | ----------------- | -------------------- |
+| Aguja vectorial  | Núcleo circular   | Diamante absoluto    |
+| Arco tangente    | Vector de impulso | Supernova radial     |
+| Órbita repulsora | Coraza hexagonal  | Constelación orbital |
+| Prisma lineal    | Radio magnético   |                      |
+| Delta explosiva  | Ciclo vital       |                      |
 
-## Arena
+La interfaz dispone de nombres y textos en español e inglés. Los identificadores internos y las reglas del motor se conservan.
 
-Suelo azul oscuro formado por paneles biselados, circuitos, nodos y hexágonos. Un reactor central combina anillos, triángulo y contorno hexagonal; sus marcas se mueven con el mundo, no pegadas a la cámara. Los límites usan un borde ámbar con una línea interior cian. La decoración conserva un contraste menor que enemigos, proyectiles y objetos y no añade obstáculos ni modifica colisiones o balance.
+## Elegir cómo evolucionar
 
-## Capturas de la vista de control de calidad
+Las tarjetas muestran la categoría, la familia de formas, la función del objeto, su nivel y los cambios numéricos del siguiente nivel. Los datos salen de las tablas reales del juego. Se muestran todos los cambios tácticos, incluidos ralentización, empuje y desbloqueo de ataques por ambos lados; no se inventan rarezas ni bonificaciones.
 
-Son capturas de Edge con emulación táctil y CanvasKit, no de un teléfono físico.
+Al elegir, las demás tarjetas se atenúan y el objeto recorre un arco hacia su destino medido en el inventario. La mejora se aplica una sola vez al completar el recorrido. El combate permanece detenido durante la elección. Las preferencias de movimiento reducido conservan las funciones con transiciones breves.
 
-| Arena                             | Elección de mejoras                    | Objeto en tránsito                         |
-| --------------------------------- | -------------------------------------- | ------------------------------------------ |
-| ![Arena](images/visual-arena.png) | ![Tarjetas](images/visual-choices.png) | ![Transferencia](images/visual-flight.png) |
+## Respuesta durante la partida
+
+La vida y la experiencia cambian con transiciones suaves. El jugador tiene un halo discreto y respuestas visuales al aparecer, recoger experiencia, recibir daño y subir de nivel. La arena combina grabados finos, un sello central y medallones de polígonos que permanecen anclados al mundo. La decoración mantiene menos contraste que el combate.
+
+## Capturas
+
+Capturas de la vista de control de calidad en Edge con emulación táctil y CanvasKit. La configuración evolucionada se prepara mediante datos de prueba para inspeccionar todos los objetos; no demuestra una partida real ni una prueba física.
+
+| Menú                           | Inventario evolucionado               | Mejora con efectos tácticos          |
+| ------------------------------ | ------------------------------------- | ------------------------------------ |
+| ![Menú](images/rogue-menu.png) | ![Inventario](images/rogue-build.png) | ![Mejoras](images/rogue-upgrade.png) |
 
 ## Validación
 
-`npm test`, `npm run typecheck`, `npm run lint`, `npm run export:native`, y las pruebas de flujo `npm run test:mobile` y `npm run test:visual` con `npm run qa:serve` activo. La prueba física de Android/iOS continúa pendiente.
+121 pruebas del motor y el modelo de presentación aprobadas; TypeScript, ESLint y exportación de JavaScript/Hermes para Android/iOS aprobados. Se aprobaron 18 comprobaciones de flujo distribuidas entre `test:mobile`, `test:visual` y `test:rogue`, incluyendo pantallas de 320×568, 390×844 y tableta, dos dedos, adquisición única, traducciones, interrupciones, derrota y reinicio.
+
+Ejecutar `npm run qa:serve` y, en otra terminal, los comandos de prueba. Se puede cambiar el servidor con `QA_URL`. La compilación nativa y la comprobación en Android/iPhone reales siguen pendientes.

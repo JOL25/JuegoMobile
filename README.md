@@ -4,7 +4,7 @@ Primera adaptación nativa para **Android e iOS** del juego [JOL25/Juego](https:
 
 ## Ya implementado
 
-La rama **`visual`** añade botones con rebote y pulsos, tarjetas de mejora animadas, transferencia del objeto elegido hacia su inventario y una arena de circuitos geométricos. Ver [capturas y detalles](docs/VISUAL.md).
+La rama **`visual`** presenta un rediseño de supervivencia geométrica: menú orbital, HUD de integridad y evolución, 15 identidades geométricas dibujadas, tarjetas con cambios de estadísticas reales, adquisición animada hacia el inventario y respuesta visual durante el combate. Ver [capturas y detalles](docs/VISUAL.md).
 
 - Arena, jugador, cinco familias de enemigos, élites, armas automáticas, partículas y colisiones.
 - Experiencia, selección de armas y mejoras, pasivas y tres definitivas desde nivel 5.
@@ -77,7 +77,7 @@ npm run qa:serve
 npm run test:mobile
 ```
 
-En la rama `visual`, con el mismo servidor activo, `npm run test:visual` comprueba las transferencias al inventario, selección única, interrupciones y movimiento reducido.
+En la rama `visual`, con el mismo servidor activo, `npm run test:visual` comprueba las transferencias al inventario, selección única, interrupciones y movimiento reducido. `npm run test:rogue` comprueba la interfaz completa, las identidades geométricas y los cambios tácticos de las mejoras.
 
 El script usa Edge instalado. En Linux/macOS, instala Chromium con `npx playwright install chromium` y usa `BROWSER_CHANNEL=chromium npm run test:mobile`. El acceso de pruebas al motor existe únicamente en desarrollo con `EXPO_PUBLIC_QA=1`; no está disponible en los paquetes de producción.
 

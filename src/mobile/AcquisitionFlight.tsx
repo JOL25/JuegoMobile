@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import { getLanguage } from "../game/ui/i18n.js";
 import { nativeDriver, useReducedMotion } from "./Motion";
+import { GeometryIcon } from "./GeometryIcon";
 import { upgradeLook } from "./visualItems.js";
 import type { Point, Upgrade } from "./UpgradeCard";
 import type { SlotRegistry } from "./InventoryDock";
@@ -117,7 +118,7 @@ export function AcquisitionFlight({
             },
           ]}
         />
-        <Text style={[s.symbol, { color: look.color }]}>{look.symbol}</Text>
+        <GeometryIcon id={acquisition.key.split(":").pop()!} size={48} />
       </Animated.View>
       <View testID="acquisition-status" style={s.caption}>
         <Text style={[s.captionLabel, { color: look.color }]}>
@@ -125,7 +126,7 @@ export function AcquisitionFlight({
             ? "EQUIPANDO EN EL ARSENAL"
             : "EQUIPPING IN THE ARSENAL"}
         </Text>
-        <Text style={s.name}>{acquisition.option.title}</Text>
+        <Text style={s.name}>{look.name}</Text>
       </View>
     </View>
   );
