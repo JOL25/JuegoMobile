@@ -1,0 +1,213 @@
+{
+  "normal": {
+    "scope": "Edge/CanvasKit early normal run with actual automatic spawns. Player invulnerable and audio muted to keep a reproducible sampling window. Submitted JS frames are not measured GPU presentations; physical native devices still required.",
+    "graphics": {
+      "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009BC4) Direct3D11 vs_5_0 ps_5_0, D3D11-27.20.100.8280)",
+      "vendor": "",
+      "device": "Intel(R) UHD Graphics"
+    },
+    "reports": [
+      {
+        "viewport": {
+          "width": 844,
+          "height": 390
+        },
+        "mode": "optimized",
+        "scenario": "normal",
+        "durationMs": 12000,
+        "submittedFps": 59.09,
+        "frameP50Ms": 16.7,
+        "frameP95Ms": 16.9,
+        "workP50Ms": 1.6,
+        "workP95Ms": 2.9,
+        "overBudgetFrames": 1,
+        "totalFrames": 710,
+        "rafP95Ms": 16.9,
+        "memoryBytes": [
+          27895261,
+          38960514,
+          37336958,
+          32025062
+        ],
+        "metrics": {
+          "targetFps": 60,
+          "fps": 57.61,
+          "frameP50Ms": 16.7,
+          "frameP95Ms": 17.9,
+          "workP50Ms": 2,
+          "workP95Ms": 4.5,
+          "overBudgetFrames": 1,
+          "samples": 240,
+          "frames": 809,
+          "capacity": 240,
+          "surface": "web-imperative-picture",
+          "perFrameReactUpdates": 0,
+          "measurement": "JS submitted frames; not measured GPU presentations"
+        },
+        "cosmetics": {
+          "detail": "full",
+          "texts": 0,
+          "sparks": 0,
+          "offscreen": 0,
+          "suppressed": 0
+        },
+        "sprites": {
+          "cached": 3,
+          "images": 3,
+          "vectorFallbacks": 0,
+          "rasterScale": 3,
+          "estimatedImageBytes": 102276,
+          "builds": 3,
+          "evictions": 0
+        },
+        "memoryMeasurement": "Chromium usedJSHeapSize; excludes GPU and other external memory",
+        "counts": {
+          "enemies": 2,
+          "projectiles": 2,
+          "pickups": 11,
+          "particles": 0,
+          "weapons": 1
+        },
+        "state": "playing"
+      }
+    ],
+    "errors": []
+  },
+  "stress": {
+    "scope": "Edge/CanvasKit emulation with seeded heavy combat. Submitted JS frames are not measured GPU presentations; physical native devices still required.",
+    "graphics": {
+      "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009BC4) Direct3D11 vs_5_0 ps_5_0, D3D11-27.20.100.8280)",
+      "vendor": "",
+      "device": "Intel(R) UHD Graphics"
+    },
+    "reports": [
+      {
+        "viewport": {
+          "width": 844,
+          "height": 390
+        },
+        "mode": "optimized",
+        "scenario": "stress",
+        "durationMs": 12000,
+        "submittedFps": 58.01,
+        "frameP50Ms": 16.7,
+        "frameP95Ms": 17.1,
+        "workP50Ms": 7,
+        "workP95Ms": 11.6,
+        "overBudgetFrames": 1,
+        "totalFrames": 698,
+        "rafP95Ms": 17.1,
+        "memoryBytes": [
+          32508215,
+          46594568,
+          29834609,
+          48652237
+        ],
+        "metrics": {
+          "targetFps": 60,
+          "fps": 60.01,
+          "frameP50Ms": 16.7,
+          "frameP95Ms": 17,
+          "workP50Ms": 6.5,
+          "workP95Ms": 10.1,
+          "overBudgetFrames": 0,
+          "samples": 240,
+          "frames": 732,
+          "capacity": 240,
+          "surface": "web-imperative-picture",
+          "perFrameReactUpdates": 0,
+          "measurement": "JS submitted frames; not measured GPU presentations"
+        },
+        "cosmetics": {
+          "detail": "busy",
+          "texts": 14,
+          "sparks": 40,
+          "offscreen": 0,
+          "suppressed": 110
+        },
+        "sprites": {
+          "cached": 11,
+          "images": 11,
+          "vectorFallbacks": 0,
+          "rasterScale": 3,
+          "estimatedImageBytes": 565776,
+          "builds": 11,
+          "evictions": 0
+        },
+        "memoryMeasurement": "Chromium usedJSHeapSize; excludes GPU and other external memory",
+        "counts": {
+          "enemies": 260,
+          "projectiles": 127,
+          "pickups": 100,
+          "particles": 164,
+          "weapons": 5
+        },
+        "state": "playing"
+      },
+      {
+        "viewport": {
+          "width": 1280,
+          "height": 720
+        },
+        "mode": "optimized",
+        "scenario": "stress",
+        "durationMs": 12000,
+        "submittedFps": 59.84,
+        "frameP50Ms": 16.7,
+        "frameP95Ms": 17,
+        "workP50Ms": 6.1,
+        "workP95Ms": 9,
+        "overBudgetFrames": 0,
+        "totalFrames": 719,
+        "rafP95Ms": 17,
+        "memoryBytes": [
+          35771259,
+          63458315,
+          60480364,
+          67419092
+        ],
+        "metrics": {
+          "targetFps": 60,
+          "fps": 60,
+          "frameP50Ms": 16.7,
+          "frameP95Ms": 17,
+          "workP50Ms": 6.2,
+          "workP95Ms": 8.6,
+          "overBudgetFrames": 0,
+          "samples": 240,
+          "frames": 793,
+          "capacity": 240,
+          "surface": "web-imperative-picture",
+          "perFrameReactUpdates": 0,
+          "measurement": "JS submitted frames; not measured GPU presentations"
+        },
+        "cosmetics": {
+          "detail": "busy",
+          "texts": 21,
+          "sparks": 40,
+          "offscreen": 0,
+          "suppressed": 110
+        },
+        "sprites": {
+          "cached": 11,
+          "images": 11,
+          "vectorFallbacks": 0,
+          "rasterScale": 3,
+          "estimatedImageBytes": 565776,
+          "builds": 11,
+          "evictions": 0
+        },
+        "memoryMeasurement": "Chromium usedJSHeapSize; excludes GPU and other external memory",
+        "counts": {
+          "enemies": 260,
+          "projectiles": 127,
+          "pickups": 100,
+          "particles": 171,
+          "weapons": 5
+        },
+        "state": "playing"
+      }
+    ],
+    "errors": []
+  }
+}

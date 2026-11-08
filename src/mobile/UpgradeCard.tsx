@@ -26,6 +26,8 @@ export function UpgradeCard({
   locked,
   onSelect,
   player,
+  compact = false,
+  dense = false,
 }: {
   option: Upgrade;
   index: number;
@@ -33,6 +35,8 @@ export function UpgradeCard({
   locked: boolean;
   onSelect: (option: Upgrade, source: Point) => void;
   player?: any;
+  compact?: boolean;
+  dense?: boolean;
 }) {
   const icon = useRef<React.ComponentRef<typeof View>>(null);
   const [entry] = useState(() => new Animated.Value(0));
@@ -55,6 +59,7 @@ export function UpgradeCard({
   return (
     <Animated.View
       style={{
+        flex: compact ? 1 : undefined,
         opacity: locked && !chosen ? 0.25 : entry,
         transform: [
           {
@@ -74,6 +79,7 @@ export function UpgradeCard({
         disabled={locked}
         style={[
           s.card,
+          compact && { flex: 1, padding: dense ? 8 : 10, gap: dense ? 4 : 8 },
           chosen && { backgroundColor: "#24343b", borderColor: "#f1e7d1" },
         ]}
         onPress={() =>
@@ -85,7 +91,7 @@ export function UpgradeCard({
         <View style={s.top}>
           <Text style={[s.kind, { color: look.color }]}>
             {display.kindLabel}{" "}
-            <Text style={s.family}> / {display.family}</Text>
+            {!compact && <Text style={s.family}> / {display.family}</Text>}
           </Text>
           <Text style={[s.badge, { color: look.color }]}>
             {display.isNew
@@ -97,20 +103,49 @@ export function UpgradeCard({
                 : `${en ? "LV" : "NV"}. ${display.level} → ${display.nextLevel}`}
           </Text>
         </View>
-        <View style={s.header}>
+        <View style={[s.header, compact && { gap: 8 }]}>
           <View
             ref={icon}
             collapsable={false}
-            style={[s.iconWell, { borderColor: `${look.color}66` }]}
+            style={[
+              s.iconWell,
+              compact && {
+                width: dense ? 30 : 36,
+                height: dense ? 30 : 36,
+                borderRadius: 9,
+              },
+              { borderColor: `${look.color}66` },
+            ]}
           >
-            <GeometryIcon id={display.id ?? "health"} size={54} />
+            <GeometryIcon
+              id={display.id ?? "health"}
+              size={dense ? 28 : compact ? 32 : 54}
+            />
           </View>
           <View style={s.names}>
-            <Text style={s.title}>{display.name}</Text>
-            <Text style={s.tagline}>{display.tagline}</Text>
+            <Text
+              numberOfLines={dense ? 2 : undefined}
+              style={[
+                s.title,
+                compact && {
+                  fontSize: dense ? 14 : 15,
+                  lineHeight: dense ? 16 : 18,
+                },
+              ]}
+            >
+              {display.name}
+            </Text>
+            {!dense && (
+              <Text
+                numberOfLines={compact ? 1 : undefined}
+                style={[s.tagline, compact && { fontSize: 9, lineHeight: 13 }]}
+              >
+                {display.tagline}{" "}
+              </Text>
+            )}
           </View>
         </View>
-        <View style={s.stats}>
+        <View style={[s.stats, compact && { gap: 6, padding: 6 }]}>
           {display.stats
             .filter(
               (stat: { after: string }) =>
@@ -121,9 +156,14 @@ export function UpgradeCard({
                 stat: { label: string; before?: string; after: string },
                 i: number,
               ) => (
-                <View key={`${stat.label}-${i}`} style={s.stat}>
+                <View
+                  key={`${stat.label}-${i}`}
+                  style={[s.stat, compact && { minWidth: "40%" }]}
+                >
                   <Text style={s.statLabel}>{stat.label}</Text>
-                  <Text style={s.after}>
+                  <Text
+                    style={[s.after, dense && { fontSize: 10, lineHeight: 12 }]}
+                  >
                     {stat.before && stat.before !== stat.after ? (
                       <Text style={s.before}>
                         {stat.before}{" "}
@@ -136,14 +176,15 @@ export function UpgradeCard({
               ),
             )}
         </View>
-        <View style={s.footer}>
-          <View style={s.pips}>
+        <View style={[s.footer, compact && { marginTop: "auto" }]}>
+          <View style={[s.pips, compact && { gap: 2 }]}>
             {display.maxLevel ? (
               Array.from({ length: Math.min(8, display.maxLevel) }, (_, i) => (
                 <View
                   key={i}
                   style={[
                     s.pip,
+                    compact && { width: 5 },
                     {
                       backgroundColor:
                         i < display.level
@@ -166,7 +207,13 @@ export function UpgradeCard({
               </Text>
             )}
           </View>
-          <Text style={[s.choose, { color: look.color }]}>
+          <Text
+            style={[
+              s.choose,
+              compact && { fontSize: 8, letterSpacing: 0.5 },
+              { color: look.color },
+            ]}
+          >
             {chosen
               ? en
                 ? "EQUIPPING…"

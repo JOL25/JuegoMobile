@@ -16,6 +16,12 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import * as ScreenOrientation from "expo-screen-orientation";
+import {
+  LandscapeHome,
+  LandscapeOptions,
+  EncounterBanner,
+} from "./LandscapeUI";
 import { StatusBar } from "expo-status-bar";
 import { Game, STATE } from "../game/core/Game.js";
 import { WorldRenderer } from "../game/rendering/WorldRenderer.js";
@@ -34,7 +40,7 @@ import { AcquisitionFlight, type Acquisition } from "./AcquisitionFlight";
 import { inventoryEntries, upgradeDestination } from "./visualItems.js";
 import { MenuIdentity, RunHud, LevelUpHeading, RunSummary } from "./RogueUI";
 import { GeometryIcon } from "./GeometryIcon";
-import { announcementText } from "./announcements.js";
+import { ACTION_LAYOUT, actionAtPoint, actionMetrics } from "./touchLayout.js";
 
 type Runtime = { game: any; input: TouchInput; sound: NativeSound };
 type Menu = {
@@ -58,11 +64,13 @@ function Button({
   onPress,
   secondary = false,
   testID,
+  compact = false,
 }: {
   title: string;
   onPress: () => void;
   secondary?: boolean;
   testID?: string;
+  compact?: boolean;
 }) {
   return (
     <VisualPressable
@@ -72,7 +80,7 @@ function Button({
       onPress={onPress}
       accent={secondary ? colors.border : colors.gold}
       ready={!secondary}
-      style={[s.button, secondary && s.secondary]}
+      style={[s.button, secondary && s.secondary, compact && s.buttonSmall]}
     >
       <Text style={[s.buttonText, secondary && { color: colors.ink }]}>
         {title}
@@ -102,6 +110,16 @@ function Screen() {
   const [fatal, setFatal] = useState("");
   const [persistent, setPersistent] = useState(true);
   const size = useWindowDimensions();
+  const landscape = size.width > size.height && size.width >= 560;
+  const safeWidth = size.width - insets.left - insets.right;
+  const touchTop =
+    insets.top + (landscape ? Math.min(130, size.height * 0.33) : 190);
+  useEffect(() => {
+    if (Platform.OS !== "web")
+      void ScreenOrientation.lockAsync(
+        ScreenOrientation.OrientationLock.LANDSCAPE,
+      ).catch(() => {});
+  }, []);
   const [, refresh] = useState(0);
   const [stick, setStick] = useState<{
     x: number;
@@ -149,6 +167,12 @@ function Screen() {
       token: ++selectionToken.current,
     });
   };
+
+  useEffect(() => {
+    runtime?.input.reset();
+    const resetFrame = requestAnimationFrame(() => setStick(null));
+    return () => cancelAnimationFrame(resetFrame);
+  }, [runtime, size.width, size.height]);
 
   const onTick = useCallback(() => refresh((n) => n + 1), []);
   const onError = useCallback((message: string) => setFatal(message), []);
@@ -241,25 +265,60 @@ function Screen() {
   const player = game?.player;
   const inventoryColumns = Math.max(
     1,
-    Math.floor((size.width - insets.left - insets.right - 26) / 46),
+    Math.floor(
+      (size.width - insets.left - insets.right - 26) / (landscape ? 36 : 46),
+    ),
   );
   const inventoryRows = player
     ? Math.ceil((inventoryEntries(player).length + 1) / inventoryColumns)
     : 1;
+  const actionAreas = actionMetrics({
+    width: size.width,
+    height: size.height,
+    insets,
+    landscape,
+  });
   const resetStick = () => {
     runtime?.input.resetMovement();
     setStick(null);
   };
+  const triggerAction = (action: "dash" | "ultimate") => {
+    const current = runtime?.game?.player;
+    if (!current) return;
+    if (action === "dash") {
+      if (current.dashCharges > 0) runtime.input.queueDash();
+    } else if (current.ultimate?.isReady()) {
+      runtime.input.queueUltimate();
+    }
+  };
   const touchStart = (event: GestureResponderEvent) => {
     if (!playing || !runtime) return;
-    const p = event.nativeEvent.changedTouches[0];
-    if (p && runtime.input.begin(p.identifier, p.pageX, p.pageY))
-      setStick({
-        x: p.pageX - insets.left,
-        y: p.pageY - insets.top - 190,
-        dx: 0,
-        dy: 0,
-      });
+    // Android reports every pointer of a gesture against the view under the
+    // first finger. Recognise DASH/ULT here as well so pressing the joystick
+    // first does not swallow the second finger.
+    for (const touch of Array.from(event.nativeEvent.changedTouches)) {
+      const action = actionAtPoint(touch.pageX, touch.pageY, actionAreas);
+      if (action) {
+        triggerAction(action);
+        continue;
+      }
+      if (
+        touch.pageX >= insets.left &&
+        touch.pageX < actionAreas.ultimate.left &&
+        touch.pageY >= touchTop &&
+        touch.pageY <= size.height - insets.bottom &&
+        runtime.input.begin(touch.identifier, touch.pageX, touch.pageY)
+      ) {
+        setStick({
+          x: touch.pageX - insets.left,
+          y: touch.pageY - touchTop,
+          dx: 0,
+          dy: 0,
+        });
+        // Another changed touch in this batch may target DASH or ULT.
+        continue;
+      }
+    }
   };
   const touchMove = (event: GestureResponderEvent) => {
     if (!playing || !runtime) return;
@@ -302,7 +361,13 @@ function Screen() {
     );
 
   return (
-    <View style={s.root}>
+    <View
+      style={s.root}
+      onTouchStart={touchStart}
+      onTouchMove={touchMove}
+      onTouchEnd={touchEnd}
+      onTouchCancel={touchEnd}
+    >
       <StatusBar hidden />
       <GameCanvas
         game={game}
@@ -315,9 +380,17 @@ function Screen() {
         <>
           <RunHud
             player={player}
-            top={insets.top + 10}
+            compact={landscape}
+            top={insets.top + 8}
             left={insets.left + 16}
-            right={insets.right + 16}
+            right={
+              landscape
+                ? size.width -
+                  insets.left -
+                  16 -
+                  Math.min(290, safeWidth * 0.36)
+                : insets.right + 16
+            }
             onPause={() => game.togglePause()}
           />
           <View
@@ -328,13 +401,9 @@ function Screen() {
               {
                 left: insets.left,
                 bottom: insets.bottom,
-                top: insets.top + 190,
+                top: touchTop,
               },
             ]}
-            onTouchStart={touchStart}
-            onTouchMove={touchMove}
-            onTouchEnd={touchEnd}
-            onTouchCancel={touchEnd}
           >
             <View
               pointerEvents="none"
@@ -361,7 +430,18 @@ function Screen() {
           <View
             style={[
               s.actions,
-              { right: insets.right + 20, bottom: insets.bottom + 24 },
+              {
+                right:
+                  insets.right +
+                  (landscape
+                    ? ACTION_LAYOUT.margin.landscape
+                    : ACTION_LAYOUT.margin.portrait),
+                bottom:
+                  insets.bottom +
+                  (landscape
+                    ? ACTION_LAYOUT.bottom.landscape
+                    : ACTION_LAYOUT.bottom.portrait),
+              },
             ]}
           >
             <VisualPressable
@@ -372,20 +452,18 @@ function Screen() {
               accent={colors.gold}
               accessibilityLabel={t("Usar definitiva")}
               disabled={!player.ultimate?.isReady()}
-              onTouchStart={() => {
-                if (player.ultimate?.isReady()) runtime.input.queueUltimate();
-              }}
+              onTouchStart={() => triggerAction("ultimate")}
               accessibilityActions={[
                 { name: "activate", label: t("Usar definitiva") },
               ]}
               onAccessibilityAction={(event) => {
                 if (event.nativeEvent.actionName === "activate")
-                  runtime.input.queueUltimate();
+                  triggerAction("ultimate");
               }}
-              onAccessibilityTap={() => runtime.input.queueUltimate()}
+              onAccessibilityTap={() => triggerAction("ultimate")}
               onPress={(event) => {
                 if ((event.nativeEvent as any).detail === 0)
-                  runtime.input.queueUltimate();
+                  triggerAction("ultimate");
               }}
               style={[
                 s.action,
@@ -411,20 +489,18 @@ function Screen() {
               accent={colors.blue}
               accessibilityLabel={t("Usar dash")}
               disabled={player.dashCharges <= 0}
-              onTouchStart={() => {
-                if (player.dashCharges > 0) runtime.input.queueDash();
-              }}
+              onTouchStart={() => triggerAction("dash")}
               accessibilityActions={[
                 { name: "activate", label: t("Usar dash") },
               ]}
               onAccessibilityAction={(event) => {
                 if (event.nativeEvent.actionName === "activate")
-                  runtime.input.queueDash();
+                  triggerAction("dash");
               }}
-              onAccessibilityTap={() => runtime.input.queueDash()}
+              onAccessibilityTap={() => triggerAction("dash")}
               onPress={(event) => {
                 if ((event.nativeEvent as any).detail === 0)
-                  runtime.input.queueDash();
+                  triggerAction("dash");
               }}
               style={[s.action, !player.dashCharges && s.disabled]}
             >
@@ -437,11 +513,17 @@ function Screen() {
           </View>
           <View
             pointerEvents="none"
-            style={[s.notices, { bottom: insets.bottom + 140 }]}
+            style={[
+              s.notices,
+              landscape
+                ? {
+                    bottom: insets.bottom + 10,
+                    left: size.width * 0.3,
+                    right: size.width * 0.3,
+                  }
+                : { bottom: insets.bottom + 140 },
+            ]}
           >
-            {!!announcementText(game) && (
-              <Text style={s.announcement}>{announcementText(game)}</Text>
-            )}
             {!!game.onboarding.message && (
               <Text style={s.hint}>
                 {t(
@@ -462,12 +544,17 @@ function Screen() {
       {(playing || menu.screen === "level_up") && (
         <InventoryDock
           player={player}
+          compact={landscape}
           preview={acquisition?.option ?? null}
           slots={slots}
           arrival={arrival}
-          top={insets.top + (playing ? 135 : 16)}
+          top={insets.top + (playing ? (landscape ? 103 : 135) : 12)}
           left={insets.left + 16}
-          right={insets.right + 16}
+          right={
+            landscape && playing
+              ? size.width - insets.left - 16 - Math.min(340, safeWidth * 0.46)
+              : insets.right + 16
+          }
         />
       )}
       {!playing && (
@@ -477,8 +564,14 @@ function Screen() {
             {
               paddingTop:
                 insets.top +
-                (menu.screen === "level_up" ? 44 + 46 * inventoryRows : 20),
-              paddingBottom: insets.bottom + 20,
+                (menu.screen === "level_up"
+                  ? landscape
+                    ? (size.height < 360 ? 55 : 61) + 36 * (inventoryRows - 1)
+                    : 44 + 46 * inventoryRows
+                  : landscape
+                    ? 10
+                    : 20),
+              paddingBottom: insets.bottom + (landscape ? 10 : 20),
               paddingLeft: insets.left + 22,
               paddingRight: insets.right + 22,
             },
@@ -489,174 +582,251 @@ function Screen() {
             contentContainerStyle={s.scroll}
             showsVerticalScrollIndicator={false}
           >
-            <View style={s.panel}>
+            <View style={[s.panel, landscape && s.panelWide]}>
               {menu.screen !== "menu" && menu.screen !== "level_up" && (
                 <Text style={s.eyebrow}>CIRCLE VS GEOMETRY</Text>
               )}
               {options ? (
-                <>
-                  <Text style={s.heading}>{t("Opciones")}</Text>
-                  <Text style={s.copy}>{t("Idioma")}</Text>
-                  <View style={s.optionRow}>
-                    <Button
-                      title="Español"
-                      secondary={getLanguage() !== "es"}
-                      onPress={() => {
-                        setLanguage("es");
-                        onTick();
-                      }}
-                    />
-                    <Button
-                      title="English"
-                      secondary={getLanguage() !== "en"}
-                      onPress={() => {
-                        setLanguage("en");
-                        onTick();
-                      }}
-                    />
-                  </View>
-                  <Text style={s.copy}>
-                    {t("Sonido:")} {Math.round(runtime.sound.volume * 100)}%
-                  </Text>
-                  <View style={s.optionRow}>
-                    {[0, 0.3, 0.6, 1].map((volume) => (
-                      <Pressable
-                        key={volume}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${Math.round(volume * 100)}%`}
+                landscape ? (
+                  <LandscapeOptions
+                    volume={runtime.sound.volume}
+                    onVolume={(value) => {
+                      runtime.sound.setVolume(value);
+                      onTick();
+                    }}
+                    onLanguage={(value) => {
+                      setLanguage(value);
+                      onTick();
+                    }}
+                    onBack={() => setOptions(false)}
+                  />
+                ) : (
+                  <>
+                    <Text style={s.heading}>{t("Opciones")}</Text>
+                    <Text style={s.copy}>{t("Idioma")}</Text>
+                    <View style={s.optionRow}>
+                      <Button
+                        compact={landscape}
+                        title="Español"
+                        secondary={getLanguage() !== "es"}
                         onPress={() => {
-                          runtime.sound.setVolume(volume);
+                          setLanguage("es");
                           onTick();
                         }}
-                        style={[
-                          s.volumeStep,
-                          runtime.sound.volume === volume && {
-                            borderColor: colors.gold,
-                          },
-                        ]}
-                      >
-                        <Text style={s.small}>{Math.round(volume * 100)}%</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                  <Button
-                    title={t("Volver")}
-                    secondary
-                    onPress={() => setOptions(false)}
-                  />
-                </>
+                      />
+                      <Button
+                        compact={landscape}
+                        title="English"
+                        secondary={getLanguage() !== "en"}
+                        onPress={() => {
+                          setLanguage("en");
+                          onTick();
+                        }}
+                      />
+                    </View>
+                    <Text style={s.copy}>
+                      {t("Sonido:")} {Math.round(runtime.sound.volume * 100)}%
+                    </Text>
+                    <View style={s.optionRow}>
+                      {[0, 0.3, 0.6, 1].map((volume) => (
+                        <Pressable
+                          key={volume}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${Math.round(volume * 100)}%`}
+                          onPress={() => {
+                            runtime.sound.setVolume(volume);
+                            onTick();
+                          }}
+                          style={[
+                            s.volumeStep,
+                            runtime.sound.volume === volume && {
+                              borderColor: colors.gold,
+                            },
+                          ]}
+                        >
+                          <Text style={s.small}>
+                            {Math.round(volume * 100)}%
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                    <Button
+                      compact={landscape}
+                      title={t("Volver")}
+                      secondary
+                      onPress={() => setOptions(false)}
+                    />
+                  </>
+                )
               ) : menu.screen === "menu" ? (
-                <>
-                  <MenuIdentity
+                landscape ? (
+                  <LandscapeHome
                     best={Number(storage.getItem("vs_clone_best_time")) || 0}
-                    compact={size.height < 700}
+                    height={size.height}
+                    onStart={() => game.start()}
+                    onOptions={() => setOptions(true)}
+                    persistent={persistent}
                   />
-                  <Button
-                    title={t("Empezar")}
-                    testID="start"
-                    onPress={() => game.start()}
-                  />
-                  <Button
-                    title={t("Opciones")}
-                    secondary
-                    onPress={() => setOptions(true)}
-                  />
-                  <Text style={s.footnote}>
-                    {label(
-                      "Arrastra para moverte · Disparo automático",
-                      "Drag to move · Automatic fire",
-                    )}
-                  </Text>
-                  {!persistent && (
+                ) : (
+                  <>
+                    <MenuIdentity
+                      best={Number(storage.getItem("vs_clone_best_time")) || 0}
+                      compact={size.height < 700}
+                    />
+                    <Button
+                      compact={landscape}
+                      title={t("Empezar")}
+                      testID="start"
+                      onPress={() => game.start()}
+                    />
+                    <Button
+                      compact={landscape}
+                      title={t("Opciones")}
+                      secondary
+                      onPress={() => setOptions(true)}
+                    />
                     <Text style={s.footnote}>
                       {label(
-                        "Guardado no disponible. El récord se conservará en esta sesión.",
-                        "Storage unavailable. Records last for this session.",
+                        "Arrastra para moverte · Disparo automático",
+                        "Drag to move · Automatic fire",
                       )}
                     </Text>
-                  )}
-                </>
+                    {!persistent && (
+                      <Text style={s.footnote}>
+                        {label(
+                          "Guardado no disponible. El récord se conservará en esta sesión.",
+                          "Storage unavailable. Records last for this session.",
+                        )}
+                      </Text>
+                    )}
+                  </>
+                )
               ) : menu.screen === "paused" ? (
                 <>
                   <Text style={s.heading}>{t("Pausa")}</Text>
-                  <RunSummary
-                    player={player}
-                    time={player.survivalTime}
-                    kills={player.kills}
-                    level={player.level}
-                  />
-                  <Button
-                    title={t("Continuar")}
-                    testID="resume"
-                    onPress={() => game.togglePause()}
-                  />
-                  <Button
-                    title={t("Opciones")}
-                    secondary
-                    onPress={() => setOptions(true)}
-                  />
-                  <Button
-                    title={t("Reiniciar")}
-                    secondary
-                    onPress={() => game.start()}
-                  />
-                  <Button
-                    title={label("Menú principal", "Main menu")}
-                    secondary
-                    onPress={() => {
-                      game.returnToMenu();
-                    }}
-                  />
+                  <View style={[s.runStack, landscape && s.runWide]}>
+                    <View style={landscape ? s.summaryColumn : undefined}>
+                      <RunSummary
+                        player={player}
+                        time={player.survivalTime}
+                        kills={player.kills}
+                        level={player.level}
+                      />
+                    </View>
+                    <View style={s.runActions}>
+                      <Button
+                        compact={landscape}
+                        title={t("Continuar")}
+                        testID="resume"
+                        onPress={() => game.togglePause()}
+                      />
+                      <Button
+                        compact={landscape}
+                        title={t("Opciones")}
+                        secondary
+                        onPress={() => setOptions(true)}
+                      />
+                      <Button
+                        compact={landscape}
+                        title={t("Reiniciar")}
+                        secondary
+                        onPress={() => game.start()}
+                      />
+                      <Button
+                        compact={landscape}
+                        title={label("Menú principal", "Main menu")}
+                        secondary
+                        onPress={() => {
+                          game.returnToMenu();
+                        }}
+                      />
+                    </View>
+                  </View>
                 </>
               ) : menu.screen === "level_up" ? (
                 <>
                   <LevelUpHeading
+                    compact={landscape}
                     level={player.level}
                     pending={game.levelUpSystem.pendingLevelUps}
                   />
-                  {menu.options?.map((upgrade, i) => (
-                    <UpgradeCard
-                      key={`${player.level}-${upgradeDestination(upgrade)}-${i}`}
-                      player={player}
-                      option={upgrade}
-                      index={i}
-                      selected={acquisition?.key ?? null}
-                      locked={!!acquisition}
-                      onSelect={chooseUpgrade}
-                    />
-                  ))}
+                  <View
+                    testID="upgrades-grid"
+                    style={[s.upgrades, landscape && s.upgradesWide]}
+                  >
+                    {menu.options?.map((upgrade, i) => (
+                      <View
+                        key={`${player.level}-${upgradeDestination(upgrade)}-${i}`}
+                        style={landscape ? s.upgradeColumn : undefined}
+                      >
+                        <UpgradeCard
+                          compact={landscape}
+                          dense={landscape && size.height < 360}
+                          key={`${player.level}-${upgradeDestination(upgrade)}-${i}`}
+                          player={player}
+                          option={upgrade}
+                          index={i}
+                          selected={acquisition?.key ?? null}
+                          locked={!!acquisition}
+                          onSelect={chooseUpgrade}
+                        />
+                      </View>
+                    ))}
+                  </View>
                 </>
               ) : (
                 <>
                   <Text style={s.heading}>{t("Has caído")}</Text>
                   {menu.stats?.isHighScore && (
-                    <Text style={s.record}>
+                    <Text
+                      style={[s.record, landscape && { marginVertical: 0 }]}
+                    >
                       {label("¡NUEVO RÉCORD!", "NEW BEST!")}
                     </Text>
                   )}
-                  <RunSummary
-                    player={player}
-                    time={menu.stats?.time ?? 0}
-                    kills={menu.stats?.kills ?? 0}
-                    level={menu.stats?.level ?? 1}
-                  />
-                  <Button
-                    title={t("Volver a intentar")}
-                    testID="retry"
-                    onPress={() => game.start()}
-                  />
-                  <Button
-                    title={label("Menú principal", "Main menu")}
-                    secondary
-                    onPress={() => {
-                      game.returnToMenu();
-                    }}
-                  />
+                  <View style={[s.runStack, landscape && s.runWide]}>
+                    <View style={landscape ? s.summaryColumn : undefined}>
+                      <RunSummary
+                        player={player}
+                        time={menu.stats?.time ?? 0}
+                        kills={menu.stats?.kills ?? 0}
+                        level={menu.stats?.level ?? 1}
+                      />
+                    </View>
+                    <View style={s.runActions}>
+                      <Button
+                        compact={landscape}
+                        title={t("Volver a intentar")}
+                        testID="retry"
+                        onPress={() => game.start()}
+                      />
+                      <Button
+                        compact={landscape}
+                        title={label("Menú principal", "Main menu")}
+                        secondary
+                        onPress={() => {
+                          game.returnToMenu();
+                        }}
+                      />
+                    </View>
+                  </View>
                 </>
               )}
             </View>
           </ScrollView>
         </View>
+      )}
+      {playing && (
+        <EncounterBanner
+          game={game}
+          top={insets.top + 10}
+          width={Math.min(400, safeWidth * (landscape ? 0.58 : 0.92))}
+          left={
+            insets.left +
+            (safeWidth - Math.min(400, safeWidth * (landscape ? 0.58 : 0.92))) /
+              2
+          }
+        />
       )}
       {acquisition && (
         <AcquisitionFlight
@@ -681,6 +851,15 @@ export default function GameScreen() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
+  panelWide: { maxWidth: 1000, paddingVertical: 6, gap: 8 },
+  buttonSmall: { minHeight: 43, paddingVertical: 9 },
+  runStack: { gap: 12 },
+  runWide: { flexDirection: "row", gap: 28, alignItems: "center" },
+  summaryColumn: { flex: 1 },
+  runActions: { flex: 1, gap: 8 },
+  upgrades: { gap: 12 },
+  upgradesWide: { flexDirection: "row", gap: 10, alignItems: "stretch" },
+  upgradeColumn: { flex: 1, minWidth: 0 },
   center: {
     alignItems: "center",
     justifyContent: "center",
@@ -864,12 +1043,12 @@ const s = StyleSheet.create({
   actions: {
     position: "absolute",
     flexDirection: "row",
-    gap: 12,
+    gap: ACTION_LAYOUT.gap,
     alignItems: "flex-end",
   },
   action: {
-    width: 82,
-    height: 82,
+    width: ACTION_LAYOUT.dashSize,
+    height: ACTION_LAYOUT.dashSize,
     borderRadius: 38,
     borderWidth: 2,
     borderColor: colors.blue,
@@ -878,8 +1057,8 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   ultimate: {
-    width: 70,
-    height: 70,
+    width: ACTION_LAYOUT.ultimateSize,
+    height: ACTION_LAYOUT.ultimateSize,
     borderColor: colors.gold,
     backgroundColor: "#30271bf0",
   },

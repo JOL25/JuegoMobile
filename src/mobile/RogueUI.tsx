@@ -199,19 +199,24 @@ export function RunHud({
   left,
   right,
   onPause,
+  compact = false,
 }: {
   player: any;
   top: number;
   left: number;
   right: number;
   onPause: () => void;
+  compact?: boolean;
 }) {
   return (
     <View pointerEvents="box-none" style={[s.hud, { top, left, right }]}>
-      <View style={s.hudTop}>
-        <View pointerEvents="none" style={s.levelSeal}>
+      <View style={[s.hudTop, compact && { gap: 8 }]}>
+        <View
+          pointerEvents="none"
+          style={[s.levelSeal, compact && { width: 36, height: 36 }]}
+        >
           <Text style={s.caption}>{words("NIVEL", "LEVEL")}</Text>
-          <Text style={s.levelNumber}>
+          <Text style={[s.levelNumber, compact && { fontSize: 17 }]}>
             {String(player.level).padStart(2, "0")}
           </Text>
         </View>
@@ -219,7 +224,7 @@ export function RunHud({
           <Text style={s.caption}>
             {words("TIEMPO EN LA ARENA", "TIME IN THE ARENA")}
           </Text>
-          <Text testID="timer" style={s.timer}>
+          <Text testID="timer" style={[s.timer, compact && { fontSize: 20 }]}>
             {runTime(player.survivalTime)}
           </Text>
         </View>
@@ -229,7 +234,7 @@ export function RunHud({
           accessibilityLabel={t("Pausar")}
           accent="#5e747c"
           onPress={onPause}
-          style={s.pause}
+          style={[s.pause, compact && { width: 36, height: 36 }]}
         >
           <View style={s.pauseBars}>
             <View style={s.pauseBar} />
@@ -237,7 +242,11 @@ export function RunHud({
           </View>
         </VisualPressable>
       </View>
-      <View pointerEvents="none" style={s.vitals}>
+      <View
+        testID="health-panel"
+        pointerEvents="none"
+        style={[s.vitals, compact && { paddingVertical: 5, gap: 3 }]}
+      >
         <View style={s.split}>
           <Text style={s.hpLabel}>{words("INTEGRIDAD", "INTEGRITY")}</Text>
           <Text style={s.numeric}>
@@ -265,28 +274,37 @@ export function RunHud({
 export function LevelUpHeading({
   level,
   pending,
+  compact = false,
 }: {
   level: number;
   pending: number;
+  compact?: boolean;
 }) {
   return (
-    <View style={s.levelHeading}>
-      <View style={s.overline}>
-        <View style={s.line} />
-        <Text style={s.eyebrow}>
-          {words("EVOLUCIÓN", "EVOLUTION")} / {String(level).padStart(2, "0")}
-        </Text>
-        <View style={s.line} />
-      </View>
-      <Text style={s.heading}>
+    <View
+      style={[s.levelHeading, compact && { gap: 3, marginBottom: 2 }]}
+      testID="level-up-heading"
+    >
+      {!compact && (
+        <View style={s.overline}>
+          <View style={s.line} />
+          <Text style={s.eyebrow}>
+            {words("EVOLUCIÓN", "EVOLUTION")} / {String(level).padStart(2, "0")}
+          </Text>
+          <View style={s.line} />
+        </View>
+      )}
+      <Text style={[s.heading, compact && { fontSize: 20 }]}>
         {words("Elige tu geometría", "Choose your geometry")}
       </Text>
-      <Text style={s.description}>
-        {words(
-          "Una elección cambia tu trayectoria.",
-          "One choice changes your trajectory.",
-        )}
-      </Text>
+      {!compact && (
+        <Text style={s.description}>
+          {words(
+            "Una elección cambia tu trayectoria.",
+            "One choice changes your trajectory.",
+          )}
+        </Text>
+      )}
       <Text style={s.hint}>
         {pending > 1
           ? words(

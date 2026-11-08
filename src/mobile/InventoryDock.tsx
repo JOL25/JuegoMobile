@@ -12,10 +12,12 @@ function Slot({
   item,
   register,
   arrival,
+  compact,
 }: {
   item: any;
   register: (node: MeasuredView | null) => void;
   arrival: Arrival;
+  compact?: boolean;
 }) {
   const [flash] = useState(() => new Animated.Value(0));
   const reduced = useReducedMotion();
@@ -40,6 +42,7 @@ function Slot({
       accessibilityLabel={`${t(item.name)} · ${item.level}`}
       style={[
         s.slot,
+        compact && { width: 32, height: 32 },
         { borderColor: item.preview ? look.color : `${look.color}55` },
         item.preview && s.preview,
       ]}
@@ -68,7 +71,7 @@ function Slot({
       {item.preview ? (
         <Text style={[s.symbol, { color: look.color }]}>＋</Text>
       ) : (
-        <GeometryIcon id={item.id} size={32} />
+        <GeometryIcon id={item.id} size={compact ? 26 : 32} />
       )}
       <Text style={s.level}>{item.level}</Text>
     </View>
@@ -82,6 +85,7 @@ export function InventoryDock({
   top,
   left,
   right,
+  compact = false,
 }: {
   player: any;
   preview: any;
@@ -90,6 +94,7 @@ export function InventoryDock({
   top: number;
   left: number;
   right: number;
+  compact?: boolean;
 }) {
   return (
     <View
@@ -102,10 +107,11 @@ export function InventoryDock({
           ? "TU GEOMETRÍA / INVENTARIO"
           : "YOUR GEOMETRY / INVENTORY"}
       </Text>
-      <View style={s.row}>
+      <View style={[s.row, compact && { gap: 4 }]}>
         {inventoryEntries(player, preview).map((item) => (
           <Slot
             key={item.key}
+            compact={compact}
             item={item}
             arrival={arrival}
             register={(node) => {

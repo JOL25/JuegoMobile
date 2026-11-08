@@ -27,3 +27,14 @@ Se aprobaron seis comprobaciones adicionales de interacción: vuelo de un arma n
 ## Rediseño roguelite
 
 Se aprobaron otras seis comprobaciones de interfaz mediante `test:rogue`: menú compacto, las 15 identidades geométricas, todas las estadísticas tácticas de mejora (incluidos ralentización y ataque por ambos lados), inventario completo y traducido, resumen de pausa, derrota y reinicio. Los builds completos se preparan con datos de prueba en emulación. No se realizó una prueba en dispositivos físicos.
+
+
+## Horizontal y rendimiento · 8 de noviembre de 2026
+
+128 pruebas automatizadas aprobadas, TypeScript y ESLint aprobados, exportación Hermes Android/iOS aprobada. La configuración solicita orientación horizontal y pantalla completa en iPad.
+
+`test:landscape` aprobó 25 comprobaciones: pantallas de 568×320, 844×390 y 1280×720; tres mejoras sin recortes por el viewport ni por sus contenedores; todas las estadísticas tácticas; opciones, pausa, derrota y reinicio; anuncios delante de la vida, transparentes a los toques y con caducidad; galería de cinco enemigos, élites y congelados. Incluye DASH y ULT antes/después del joystick y ambos dedos iniciados en un mismo evento, con los dos órdenes. `test:mobile`, `test:visual` y `test:rogue` mantienen seis comprobaciones aprobadas cada uno: 43 comprobaciones de interfaz y controles en total.
+
+Las mediciones en Edge/CanvasKit dieron 59,09 FPS enviados al inicio de una partida y 58,01–59,84 con 260 enemigos. No son presentaciones medidas de GPU ni pruebas nativas. La caché raster a 3× evitó repetir el dibujo vectorial por enemigo; React no se actualiza por cada frame de combate. Se conserva la simulación a paso fijo y solo se limita el dibujo cosmético de chispas y cifras.
+
+Los valores completos, condiciones de prueba y capturas están en [docs/HORIZONTAL.md](../docs/HORIZONTAL.md). El rendimiento estable en celulares y partidas largas sigue pendiente de medición física.

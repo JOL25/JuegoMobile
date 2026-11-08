@@ -182,13 +182,11 @@ export class Player {
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#23131c';
     ctx.beginPath();
-    ctx.moveTo(this.radius - 3, 0);
-    ctx.lineTo(0, -7);
-    ctx.lineTo(0, -3);
-    ctx.lineTo(-7, -3);
-    ctx.lineTo(-7, 3);
-    ctx.lineTo(0, 3);
-    ctx.lineTo(0, 7);
+    // A compact directional chevron keeps the circular silhouette clear.
+    ctx.moveTo(this.radius * 0.64, 0);
+    ctx.lineTo(-this.radius * 0.26, -this.radius * 0.31);
+    ctx.lineTo(-this.radius * 0.04, 0);
+    ctx.lineTo(-this.radius * 0.26, this.radius * 0.31);
     ctx.closePath();
     ctx.fill();
 

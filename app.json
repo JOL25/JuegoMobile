@@ -3,12 +3,13 @@
     "name": "Circle vs Geometry",
     "slug": "juegomobile",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "landscape",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jol25.juegomobile"
+      "bundleIdentifier": "com.jol25.juegomobile",
+      "requireFullScreen": true
     },
     "android": {
       "adaptiveIcon": {
@@ -31,7 +32,13 @@
           "enableBackgroundRecording": false
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "LANDSCAPE"
+        }
+      ]
     ]
   }
 }

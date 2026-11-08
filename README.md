@@ -4,7 +4,7 @@ Primera adaptación nativa para **Android e iOS** del juego [JOL25/Juego](https:
 
 ## Ya implementado
 
-La rama **`visual`** presenta un rediseño de supervivencia geométrica: menú orbital, HUD de integridad y evolución, 15 identidades geométricas dibujadas, tarjetas con cambios de estadísticas reales, adquisición animada hacia el inventario y respuesta visual durante el combate. Ver [capturas y detalles](docs/VISUAL.md).
+La rama **`visual`** presenta un rediseño de supervivencia geométrica: interfaz horizontal, menú orbital, HUD compacto de integridad y evolución, 15 identidades geométricas, tres mejoras en una fila y adquisición animada hacia el inventario. Los enemigos y el jugador usan siluetas geométricas suaves; las alertas aparecen delante del HUD. Ver [capturas y detalles](docs/VISUAL.md) y [validación horizontal y rendimiento](docs/HORIZONTAL.md).
 
 - Arena, jugador, cinco familias de enemigos, élites, armas automáticas, partículas y colisiones.
 - Experiencia, selección de armas y mejoras, pasivas y tres definitivas desde nivel 5.
@@ -14,6 +14,17 @@ La rama **`visual`** presenta un rediseño de supervivencia geométrica: menú o
 - Récord, idioma español/inglés, volumen y tutorial guardados en el dispositivo.
 - Pausa al pasar a segundo plano; al regresar hace falta pulsar Continuar.
 - Áreas seguras para recortes de pantalla y distribución para teléfonos y tabletas.
+
+## Abrir con Expo Go
+
+Con Expo Go compatible con SDK 58 instalado y el celular en la misma red que el ordenador:
+
+```sh
+npm ci
+npx expo start --go --lan
+```
+
+Escanea el QR que muestra Expo. La dirección local depende de la red y funciona mientras el servidor esté encendido. La app solicita orientación horizontal; el navegador conserva una vista vertical auxiliar para pruebas.
 
 ## Ejecutar en Android
 
@@ -78,6 +89,8 @@ npm run test:mobile
 ```
 
 En la rama `visual`, con el mismo servidor activo, `npm run test:visual` comprueba las transferencias al inventario, selección única, interrupciones y movimiento reducido. `npm run test:rogue` comprueba la interfaz completa, las identidades geométricas y los cambios tácticos de las mejoras.
+
+`npm run test:landscape` comprueba las pantallas horizontales de 568×320, 844×390 y 1280×720, avisos delante de la vida, mejoras sin recortes y gestos con dos dedos. `npm run test:performance` mide una escena de carga; `npm run test:performance -- --normal` mide el inicio de una partida. Estos comandos necesitan el mismo servidor QA activo.
 
 El script usa Edge instalado. En Linux/macOS, instala Chromium con `npx playwright install chromium` y usa `BROWSER_CHANNEL=chromium npm run test:mobile`. El acceso de pruebas al motor existe únicamente en desarrollo con `EXPO_PUBLIC_QA=1`; no está disponible en los paquetes de producción.
 

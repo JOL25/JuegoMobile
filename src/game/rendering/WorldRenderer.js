@@ -2,6 +2,9 @@ import { WORLD } from "../config.js";
 import { STATE } from "../core/GameState.js";
 import { drawArenaFloor } from "./ArenaFloor.js";
 
+const FULL_COSMETICS = { texts: 64, sparks: 80 };
+const BUSY_COSMETICS = { texts: 28, sparks: 40 };
+
 export class WorldRenderer {
   setReducedMotion(enabled) {
     this.reducedMotion = enabled;
@@ -9,6 +12,7 @@ export class WorldRenderer {
 
   render(game) {
     const { canvas, ctx } = game;
+    this.updateCosmeticDetail(game);
     ctx.save();
 
     if (game.shakeTimer > 0 && !this.reducedMotion) {
@@ -47,6 +51,7 @@ export class WorldRenderer {
     ctx.restore();
 
     for (const effect of game.auraEffects) {
+      if (!camera.isVisible(effect.x, effect.y, effect.radius)) continue;
       const screen = camera.worldToScreen(effect.x, effect.y);
       const progress = effect.age / effect.life;
       ctx.save();
@@ -66,6 +71,7 @@ export class WorldRenderer {
     }
 
     for (const effect of game.shockwaves) {
+      if (!camera.isVisible(effect.x, effect.y, effect.radius)) continue;
       const screen = camera.worldToScreen(effect.x, effect.y);
       const progress = effect.radius / effect.maxRadius;
       ctx.save();
@@ -96,6 +102,7 @@ export class WorldRenderer {
     });
 
     for (const effect of game.swipeEffects) {
+      if (!camera.isVisible(effect.x, effect.y, effect.range)) continue;
       const screen = camera.worldToScreen(effect.x, effect.y);
       const progress = effect.age / effect.life;
       ctx.save();
@@ -155,10 +162,67 @@ export class WorldRenderer {
       projectile.draw(ctx, screen.x, screen.y);
     });
 
+    // Particle updates and pool membership are untouched: only cosmetic draw work
+    // is bounded. Separate budgets keep floating damage readable during spark storms.
+    const budget = this.lowCosmeticDetail ? BUSY_COSMETICS : FULL_COSMETICS;
+    const stats = this.cosmeticStats;
+    stats.texts = 0;
+    stats.sparks = 0;
+    stats.offscreen = 0;
+    stats.suppressed = 0;
+    const width = game.canvas.width,
+      height = game.canvas.height;
     game.particlePool.forEachActive((particle) => {
       const screen = camera.worldToScreen(particle.x, particle.y);
+      const isText = particle.kind === "text";
+      const margin = isText ? 40 : Math.max(6, particle.size || 0);
+      if (
+        screen.x < -margin ||
+        screen.y < -margin ||
+        screen.x > width + margin ||
+        screen.y > height + margin
+      ) {
+        stats.offscreen++;
+        return;
+      }
+      const category = isText ? "texts" : "sparks";
+      if (stats[category] >= budget[category]) {
+        stats.suppressed++;
+        return;
+      }
+      stats[category]++;
       particle.draw(ctx, screen.x, screen.y);
     });
+  }
+
+  updateCosmeticDetail(game) {
+    const metrics = game.renderMetrics;
+    if (this.detailPlayer !== game.player) {
+      this.detailPlayer = game.player;
+      this.lowCosmeticDetail = false;
+      this.recoveryFrame = null;
+      this.cosmeticStats = {
+        detail: "full",
+        texts: 0,
+        sparks: 0,
+        offscreen: 0,
+        suppressed: 0,
+      };
+    }
+    if (metrics?.samples >= 30) {
+      if (metrics.workP95Ms > 12) {
+        this.lowCosmeticDetail = true;
+        this.recoveryFrame = null;
+      } else if (this.lowCosmeticDetail && metrics.workP95Ms < 8.5) {
+        // A sustained recovery window avoids switching detail every HUD sample.
+        this.recoveryFrame ??= metrics.frames;
+        if (metrics.frames - this.recoveryFrame >= 180) {
+          this.lowCosmeticDetail = false;
+          this.recoveryFrame = null;
+        }
+      } else this.recoveryFrame = null;
+    }
+    this.cosmeticStats.detail = this.lowCosmeticDetail ? "busy" : "full";
   }
 
   // Renderer-local observations create feedback without adding rules to the simulation.

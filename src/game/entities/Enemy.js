@@ -150,7 +150,14 @@ export class Enemy {
     ctx.lineWidth = this.isElite ? 3 : 1.5;
 
     drawPixelSprite(ctx, screenX, screenY, this.radius, ctx.fillStyle,
-      this.isElite ? '#ffd54a' : '#241628', this.type.vertices);
+      this.isElite ? '#ffd54a' : this.frozen ? '#d7f8ff' : '#b5c8d1', this.type.vertices);
+
+    if (this.isElite) {
+      ctx.strokeStyle = 'rgba(255,213,74,0.5)';
+      ctx.lineWidth = 1;
+      traceEnemyShape(ctx, this.type, screenX, screenY, this.radius + 3);
+      ctx.stroke();
+    }
 
     if (this.frozen) {
       ctx.strokeStyle = 'rgba(220,250,255,0.9)';

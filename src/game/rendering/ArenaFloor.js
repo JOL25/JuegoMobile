@@ -112,38 +112,52 @@ export function drawArenaFloor(game) {
   }
   ctx.stroke();
 
-  // Disconnected corner brackets and circuit fragments, instead of a heavy tile grid.
-  for (
-    let row = Math.floor(top / PANEL);
-    row <= Math.ceil(bottom / PANEL);
-    row++
-  ) {
-    for (
-      let col = Math.floor(left / PANEL);
-      col <= Math.ceil(right / PANEL);
-      col++
-    ) {
+  // Batch equal-style etchings into two paths instead of one stroke per tile.
+  // Clip the CPU traversal to visible marks, while keeping the same world anchors.
+  const minCol = Math.ceil((left - 12) / PANEL),
+    maxCol = Math.floor((right + 12) / PANEL);
+  const minRow = Math.ceil((top - 12) / PANEL),
+    maxRow = Math.floor((bottom + 12) / PANEL);
+  ctx.strokeStyle = "rgba(139,176,194,0.105)";
+  ctx.beginPath();
+  for (let row = minRow; row <= maxRow; row++) {
+    for (let col = minCol; col <= maxCol; col++) {
       const p = camera.worldToScreen(col * PANEL, row * PANEL);
-      ctx.strokeStyle = "rgba(139,176,194,0.105)";
-      ctx.beginPath();
       ctx.moveTo(p.x - 12, p.y);
       ctx.lineTo(p.x + 12, p.y);
       ctx.moveTo(p.x, p.y - 12);
       ctx.lineTo(p.x, p.y + 12);
-      ctx.stroke();
-      ctx.fillStyle = "rgba(218,180,103,0.12)";
-      ctx.fillRect(p.x - 1, p.y - 1, 2, 2);
-      if ((col + row) % 2 === 0) {
-        ctx.strokeStyle = "rgba(139,176,194,0.045)";
-        ctx.beginPath();
-        ctx.moveTo(p.x + 38, p.y + 68);
-        ctx.lineTo(p.x + 70, p.y + 68);
-        ctx.lineTo(p.x + 82, p.y + 80);
-        ctx.lineTo(p.x + 122, p.y + 80);
-        ctx.stroke();
-      }
     }
   }
+  ctx.stroke();
+  ctx.fillStyle = "rgba(218,180,103,0.12)";
+  for (let row = minRow; row <= maxRow; row++) {
+    for (let col = minCol; col <= maxCol; col++) {
+      const p = camera.worldToScreen(col * PANEL, row * PANEL);
+      ctx.fillRect(p.x - 1, p.y - 1, 2, 2);
+    }
+  }
+  ctx.strokeStyle = "rgba(139,176,194,0.045)";
+  ctx.beginPath();
+  for (
+    let row = Math.ceil((top - 80) / PANEL);
+    row <= Math.floor((bottom - 68) / PANEL);
+    row++
+  ) {
+    for (
+      let col = Math.ceil((left - 122) / PANEL);
+      col <= Math.floor((right - 38) / PANEL);
+      col++
+    ) {
+      if ((col + row) % 2 !== 0) continue;
+      const p = camera.worldToScreen(col * PANEL, row * PANEL);
+      ctx.moveTo(p.x + 38, p.y + 68);
+      ctx.lineTo(p.x + 70, p.y + 68);
+      ctx.lineTo(p.x + 82, p.y + 80);
+      ctx.lineTo(p.x + 122, p.y + 80);
+    }
+  }
+  ctx.stroke();
 
   const origin = camera.worldToScreen(0, 0);
   if (camera.isVisible(0, 0, 220))

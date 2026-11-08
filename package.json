@@ -9,12 +9,15 @@
     "expo-asset": "~58.0.20",
     "expo-audio": "~58.0.11",
     "expo-dev-client": "~58.0.18",
+    "expo-screen-orientation": "~58.0.4",
     "expo-status-bar": "~58.0.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.88.1",
+    "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.11.1",
-    "react-native-web": "^0.21.4"
+    "react-native-web": "^0.21.4",
+    "react-native-worklets": "0.13.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",
@@ -42,7 +45,9 @@
     "lint": "expo lint",
     "assets:icons": "node scripts/generate-icons.mjs",
     "test:visual": "node scripts/visual-smoke.mjs",
-    "test:rogue": "node scripts/rogue-smoke.mjs"
+    "test:rogue": "node scripts/rogue-smoke.mjs",
+    "test:landscape": "node scripts/landscape-smoke.mjs",
+    "test:performance": "node scripts/performance-smoke.mjs"
   },
   "private": true,
   "type": "module"

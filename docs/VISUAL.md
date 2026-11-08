@@ -1,6 +1,6 @@
 # Interfaz de supervivencia geométrica
 
-La rama `visual` presenta una identidad propia de roguelite: emblema orbital animado, menú centrado en la siguiente partida, HUD de integridad y evolución, inventario de formas y resumen con los resultados reales de la partida.
+La rama `visual` presenta una identidad propia de roguelite en orientación horizontal: emblema orbital animado, menú centrado en la siguiente partida, HUD de integridad y evolución, inventario de formas y resumen con los resultados reales de la partida.
 
 ## Un lenguaje geométrico coherente
 
@@ -34,8 +34,10 @@ Capturas de la vista de control de calidad en Edge con emulación táctil y Canv
 | ------------------------------ | ------------------------------------- | ------------------------------------ |
 | ![Menú](images/rogue-menu.png) | ![Inventario](images/rogue-build.png) | ![Mejoras](images/rogue-upgrade.png) |
 
+La distribución horizontal actual, sus capturas y mediciones se documentan en [Juego horizontal y rendimiento](HORIZONTAL.md).
+
 ## Validación
 
-121 pruebas del motor y el modelo de presentación aprobadas; TypeScript, ESLint y exportación de JavaScript/Hermes para Android/iOS aprobados. Se aprobaron 18 comprobaciones de flujo distribuidas entre `test:mobile`, `test:visual` y `test:rogue`, incluyendo pantallas de 320×568, 390×844 y tableta, dos dedos, adquisición única, traducciones, interrupciones, derrota y reinicio.
+128 pruebas del motor, entrada y modelo de presentación aprobadas; TypeScript, ESLint y exportación de JavaScript/Hermes para Android/iOS aprobados. Se aprobaron 18 comprobaciones de flujo distribuidas entre `test:mobile`, `test:visual` y `test:rogue`, incluyendo pantallas de 320×568, 390×844 y tableta, dos dedos, adquisición única, traducciones, interrupciones, derrota y reinicio.
 
 Ejecutar `npm run qa:serve` y, en otra terminal, los comandos de prueba. Se puede cambiar el servidor con `QA_URL`. La compilación nativa y la comprobación en Android/iPhone reales siguen pendientes.
